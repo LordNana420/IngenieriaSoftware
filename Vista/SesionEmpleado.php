@@ -2,6 +2,7 @@
 require_once("../Controlador/ClienteControlador.php");
 $controlador = new ClienteControlador();
 $clientes = $controlador->obtenerClientes(); 
+
 ?>
 <!DOCTYPE html>
 <html lang="es">

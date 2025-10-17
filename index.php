@@ -25,7 +25,7 @@ $paginas_con_autenticacion = array(
 
 
 if(!isset($_GET["pid"])){
-    include ("presentacion/inicio.php");
+    include ("Vista/inicio.php");
 }else{
     $pid = $_GET["pid"]; 
 
@@ -33,7 +33,7 @@ if(!isset($_GET["pid"])){
         include $pid;
     } else if(in_array($pid, $paginas_con_autenticacion)){
          if (!isset($_SESSION["id"])) {
-            include "autenticar.php";
+            include "Vista/autenticar.php";
     }} else {
         echo "error 404";
     }
