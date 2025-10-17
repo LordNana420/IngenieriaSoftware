@@ -2,10 +2,12 @@
 require_once("Conexion.php");
 require_once("Cliente.php");
 
-class ClienteDAO {
+class ClienteDAO
+{
     private $conexion;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->conexion = new Conexion();
         $this->conexion->abrir();
     }
@@ -13,7 +15,8 @@ class ClienteDAO {
     /**
      * 🔹 Consultar todos los clientes
      */
-    public function consultarTodos() {
+    public function consultarTodos()
+    {
         $sql = "SELECT idCliente, Nombre, Apellido, Telefono 
                 FROM Cliente 
                 ORDER BY Nombre ASC";
@@ -38,7 +41,8 @@ class ClienteDAO {
     /**
      * 🔹 Consultar cliente por ID
      */
-    public function consultarPorId($idCliente) {
+    public function consultarPorId($idCliente)
+    {
         $idCliente = intval($idCliente);
         $sql = "SELECT idCliente, Nombre, Apellido, Telefono 
                 FROM Cliente 
@@ -61,47 +65,48 @@ class ClienteDAO {
     /**
      * 🔹 Insertar un nuevo cliente
      */
-    public function insertar(Cliente $cliente) {
-    $conexion = $this->conexion->getConexion();
+    public function insertar(Cliente $cliente)
+    {
+        $conexion = $this->conexion->getConexion();
 
-    $id = intval($cliente->getId());
-    $nombre = $conexion->real_escape_string($cliente->getNombre());
-    $apellido = $conexion->real_escape_string($cliente->getApellido());
-    $telefono = $conexion->real_escape_string($cliente->getTelefono());
+        $id = intval($cliente->getId());
+        $nombre = $conexion->real_escape_string($cliente->getNombre());
+        $apellido = $conexion->real_escape_string($cliente->getApellido());
+        $telefono = $conexion->real_escape_string($cliente->getTelefono());
 
-    // ✅ 1️⃣ Verificar si el ID ya existe
-    $sqlVerificar = "SELECT idCliente FROM Cliente WHERE idCliente = $id";
-    $resultado = $conexion->query($sqlVerificar);
+        $sqlVerificar = "SELECT idCliente FROM Cliente WHERE idCliente = $id";
+        $resultado = $conexion->query($sqlVerificar);
 
-    if ($resultado && $resultado->num_rows > 0) {
-        // Ya existe un cliente con ese ID
-        return [
-            "exito" => false,
-            "mensaje" => "La cedula registrada ya existe. No se puede registrar un cliente duplicado."
-        ];
-    }
+        if ($resultado && $resultado->num_rows > 0) {
+            // Ya existe un cliente (existe para no registrar)
+            return [
+                "exito" => false,
+                "mensaje" => "La cedula registrada ya existe. No se puede registrar un cliente duplicado."
+            ];
+        } else {
 
-    // ✅ 2️⃣ Insertar el nuevo cliente (solo si el ID no existe)
-    $sqlInsertar = "INSERT INTO Cliente (idCliente, Nombre, Apellido, Telefono) 
+            // Insertar el nuevo cliente (solo si no existe)
+            $sqlInsertar = "INSERT INTO Cliente (idCliente, Nombre, Apellido, Telefono) 
                     VALUES ($id, '$nombre', '$apellido', '$telefono')";
 
-    if ($conexion->query($sqlInsertar)) {
-        return [
-            "exito" => true,
-            "mensaje" => "Cliente registrado correctamente"
-        ];
-    } else {
-        return [
-            "exito" => false,
-            "mensaje" => "Error al registrar el cliente: " . $conexion->error
-        ];
+            if ($conexion->query($sqlInsertar)) {
+                return [
+                    "exito" => true,
+                    "mensaje" => "Cliente registrado correctamente"
+                ];
+            } else {
+                return [
+                    "exito" => false,
+                    "mensaje" => "Error al registrar el cliente: " . $conexion->error
+                ];
+            }
+        }
     }
-}
-
     /**
-     * 🔹 Actualizar cliente
+     * Actualizar cliente
      */
-    public function actualizar(Cliente $cliente) {
+    public function actualizar(Cliente $cliente)
+    {
         $id = intval($cliente->getId());
         $nombre = $this->conexion->getConexion()->real_escape_string($cliente->getNombre());
         $apellido = $this->conexion->getConexion()->real_escape_string($cliente->getApellido());
@@ -115,18 +120,20 @@ class ClienteDAO {
     }
 
     /**
-     * 🔹 Eliminar cliente
+     * Eliminar cliente
      */
-    public function eliminar($idCliente) {
+    public function eliminar($idCliente)
+    {
         $idCliente = intval($idCliente);
         $sql = "DELETE FROM Cliente WHERE idCliente=$idCliente";
         return $this->conexion->getConexion()->query($sql);
     }
 
     /**
-     * 🔹 Cerrar conexión
+     * Cerrar conexión
      */
-    public function cerrarConexion() {
+    public function cerrarConexion()
+    {
         $this->conexion->cerrar();
     }
 }

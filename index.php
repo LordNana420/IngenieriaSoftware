@@ -18,7 +18,10 @@ if (isset($_GET["salir"])) {
 
 $paginas_sin_autenticacion = array(
     "Vista/inicio.php",
-    "Vista/autenticar.php"
+    "Vista/autenticar.php",
+    "Vista/registrarCliente.php"
+    
+
 );
 
 $paginas_con_autenticacion = array(

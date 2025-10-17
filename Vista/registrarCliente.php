@@ -9,7 +9,7 @@ if (isset($_POST['registrar'])) {
 
     if (is_array($resultado)) {
         $mensaje = $resultado['mensaje'];
-        $exito=$resultado['exito'];
+        $exito = $resultado['exito'];
     } else {
         $mensaje = "Error inesperado al registrar el cliente.";
     }

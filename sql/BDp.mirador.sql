@@ -343,3 +343,15 @@ INSERT INTO Producto (idProducto, Lote_idLote, Inventario_idInventario) VALUES
 (3, 2, 2),
 (4, 3, 3),
 (5, 3, 3);
+
+ALTER TABLE Mercancia
+ADD COLUMN Stock_Minimo INT NOT NULL DEFAULT 10;
+
+ALTER TABLE Mercancia
+ADD COLUMN Stock_Maximo INT NOT NULL;
+UPDATE Producto SET stock_maximo = 100 WHERE idProducto = 1; -- Agua Mineral 1L
+UPDATE Producto SET stock_maximo = 50  WHERE idProducto = 2; -- Leche Entera 1L
+UPDATE Producto SET stock_maximo = 40  WHERE idProducto = 3; -- Detergente 1kg
+UPDATE Producto SET stock_maximo = 30  WHERE idProducto = 4; -- Galletas de Chocolate
+
+
