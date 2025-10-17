@@ -17,6 +17,11 @@ class Conexion{
     public function ejecutar($sentencia){
         $this -> resultado = $this -> conexion -> query($sentencia);
     }
+
+    public function getConexion() {
+    return $this->conexion;
+}
+
     
     public function registro(){
         return $this -> resultado -> fetch_row();

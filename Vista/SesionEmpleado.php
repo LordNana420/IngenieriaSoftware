@@ -1,5 +1,7 @@
 <?php
-
+require_once("../Controlador/ClienteControlador.php");
+$controlador = new ClienteControlador();
+$clientes = $controlador->obtenerClientes(); 
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -11,6 +13,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body class="bg-light">
+
   <nav class="navbar navbar-expand-lg navbar-dark bg-warning py-3 shadow">
     <div class="container-fluid">
       <a class="navbar-brand fw-bold fs-4" href="#"><i class="bi bi-cupcake"></i> Panadería P.mirador</a>
@@ -31,32 +34,36 @@
       <input type="text" class="form-control" placeholder="Buscar por nombre, documento o correo...">
       <button class="btn btn-warning"><i class="bi bi-search"></i> Buscar</button>
     </div>
+<table class="table table-hover table-bordered align-middle">
+  <thead class="table-warning">
+    <tr>
+      <th><i class="bi bi-hash"></i> ID</th>
+      <th><i class="bi bi-person-badge"></i> Nombre</th>
+      <th><i class="bi bi-person-badge-fill"></i> Apellido</th>
+      <th><i class="bi bi-telephone"></i> Teléfono</th>
+      <th><i class="bi bi-gear"></i> Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    <?php if (!empty($clientes)): ?>
+        <?php foreach ($clientes as $c): ?>
+            <tr>
+                <td><?= htmlspecialchars($c->getId()) ?></td>
+                <td><?= htmlspecialchars($c->getNombre()) ?></td>
+                <td><?= htmlspecialchars($c->getApellido()) ?></td>
+                <td><?= htmlspecialchars($c->getTelefono()) ?></td>
+                <td>
+                    <button class="btn btn-sm btn-info text-white"><i class="bi bi-eye"></i> Ver</button>
+                    <button class="btn btn-sm btn-warning text-dark"><i class="bi bi-pencil"></i> Editar</button>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <tr><td colspan="5" class="text-center">No hay clientes registrados.</td></tr>
+    <?php endif; ?>
+</tbody>
 
-    <table class="table table-hover table-bordered align-middle">
-      <thead class="table-warning">
-        <tr>
-          <th><i class="bi bi-person-badge"></i> Nombre</th>
-          <th><i class="bi bi-card-text"></i> Documento</th>
-          <th><i class="bi bi-telephone"></i> Teléfono</th>
-          <th><i class="bi bi-envelope"></i> Correo</th>
-          <th><i class="bi bi-geo-alt"></i> Dirección</th>
-          <th><i class="bi bi-gear"></i> Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Juan Pérez</td>
-          <td>12345678</td>
-          <td>3201234567</td>
-          <td>juanperez@mail.com</td>
-          <td>Calle 10 #5-25</td>
-          <td>
-            <button class="btn btn-sm btn-info text-white"><i class="bi bi-eye"></i> Ver</button>
-            <button class="btn btn-sm btn-warning text-dark"><i class="bi bi-pencil"></i> Editar</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+</table>
 
     <div class="alert alert-success mt-3 d-none" id="alertaConsulta">
       <i class="bi bi-check-circle-fill"></i> Consulta realizada con éxito.
