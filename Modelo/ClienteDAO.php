@@ -62,15 +62,41 @@ class ClienteDAO {
      * 🔹 Insertar un nuevo cliente
      */
     public function insertar(Cliente $cliente) {
-        $nombre = $this->conexion->getConexion()->real_escape_string($cliente->getNombre());
-        $apellido = $this->conexion->getConexion()->real_escape_string($cliente->getApellido());
-        $telefono = $this->conexion->getConexion()->real_escape_string($cliente->getTelefono());
+    $conexion = $this->conexion->getConexion();
 
-        $sql = "INSERT INTO Cliente (Nombre, Apellido, Telefono) 
-                VALUES ('$nombre', '$apellido', '$telefono')";
+    $id = intval($cliente->getId());
+    $nombre = $conexion->real_escape_string($cliente->getNombre());
+    $apellido = $conexion->real_escape_string($cliente->getApellido());
+    $telefono = $conexion->real_escape_string($cliente->getTelefono());
 
-        return $this->conexion->getConexion()->query($sql);
+    // ✅ 1️⃣ Verificar si el ID ya existe
+    $sqlVerificar = "SELECT idCliente FROM Cliente WHERE idCliente = $id";
+    $resultado = $conexion->query($sqlVerificar);
+
+    if ($resultado && $resultado->num_rows > 0) {
+        // Ya existe un cliente con ese ID
+        return [
+            "exito" => false,
+            "mensaje" => "La cedula registrada ya existe. No se puede registrar un cliente duplicado."
+        ];
     }
+
+    // ✅ 2️⃣ Insertar el nuevo cliente (solo si el ID no existe)
+    $sqlInsertar = "INSERT INTO Cliente (idCliente, Nombre, Apellido, Telefono) 
+                    VALUES ($id, '$nombre', '$apellido', '$telefono')";
+
+    if ($conexion->query($sqlInsertar)) {
+        return [
+            "exito" => true,
+            "mensaje" => "Cliente registrado correctamente"
+        ];
+    } else {
+        return [
+            "exito" => false,
+            "mensaje" => "Error al registrar el cliente: " . $conexion->error
+        ];
+    }
+}
 
     /**
      * 🔹 Actualizar cliente

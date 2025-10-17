@@ -12,5 +12,10 @@ class ClienteControlador {
         $clienteDAO = new ClienteDAO();
         return $clienteDAO->consultarTodos();
     }
+
+    public function registrarCliente(Cliente $cliente) {
+        $clienteDAO = new ClienteDAO();
+        return $clienteDAO->insertar($cliente);
+    }
 }
 ?>
