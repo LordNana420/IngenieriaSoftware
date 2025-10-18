@@ -11,7 +11,7 @@ class MercanciaControlador {
 
     // Retorna las alertas de stock bajo
     public function obtenerAlertasStock() {
-        return $this->mercanciaDAO->consultarStockBajo();
+        return $this->mercanciaDAO->consultarStock();
     }
 
     // Opcional: cerrar conexión

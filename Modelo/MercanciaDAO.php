@@ -2,16 +2,19 @@
 require_once("Conexion.php");
 require_once("Mercancia.php");
 
-class MercanciaDAO {
+class MercanciaDAO
+{
     private $conexion;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->conexion = new Conexion();
         $this->conexion->abrir();
     }
 
     // Consultar todos los productos
-    public function consultarTodos() {
+    public function consultarTodos()
+    {
         $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_Minimo 
                 FROM Mercancia 
                 ORDER BY Nombre ASC";
@@ -32,7 +35,8 @@ class MercanciaDAO {
     }
 
     // Consultar insumos con stock bajo
-    public function consultarStockBajo() {
+    public function consultarStock()
+    {
         $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_Minimo 
                 FROM Mercancia 
                 WHERE Cantidad_Mercancia <= Stock_Minimo
@@ -46,14 +50,35 @@ class MercanciaDAO {
                     $fila['idMercancia'],
                     $fila['Nombre'],
                     $fila['Cantidad_Mercancia'],
-                    $fila['Stock_Minimo']
+                    $fila['Stock_Minimo'],
+                    'Stock muy bajo'
+
+                    
                 );
             }
         }
+        $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_maximo
+                FROM Mercancia 
+                WHERE Cantidad_Mercancia > stock_maximo
+                ORDER BY Cantidad_Mercancia ASC";
+        $resultado = $this->conexion->getConexion()->query($sql);
+        if ($resultado && $resultado->num_rows > 0) {
+            while ($fila = $resultado->fetch_assoc()) {
+                $alertas[] = new Mercancia(
+                    $fila['idMercancia'],
+                    $fila['Nombre'],
+                    $fila['Cantidad_Mercancia'],
+                    $fila['Stock_maximo'],
+                    'Stock limite superado'
+                );
+            }
+        }
+
         return $alertas;
     }
 
-    public function cerrarConexion() {
+    public function cerrarConexion()
+    {
         $this->conexion->cerrar();
     }
 }

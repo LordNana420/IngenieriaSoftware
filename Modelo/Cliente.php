@@ -5,7 +5,7 @@ class Cliente {
     private $apellido;
     private $telefono;
 
-    public function __construct($id = 0, $nombre = "", $apellido = "", $telefono = "") {
+    public function __construct($id = "", $nombre = "", $apellido = "", $telefono = "") {
         $this->id = $id;
         $this->nombre = $nombre;
         $this->apellido = $apellido;

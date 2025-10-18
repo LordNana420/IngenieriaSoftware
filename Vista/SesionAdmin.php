@@ -6,6 +6,7 @@ $alertas = $controlador->obtenerAlertasStock();
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,11 +14,13 @@ $alertas = $controlador->obtenerAlertasStock();
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 </head>
+
 <body class="bg-light">
   <nav class="navbar navbar-expand-lg navbar-dark bg-warning py-3 shadow">
     <div class="container-fluid">
       <a class="navbar-brand fw-bold fs-4" href="#"><i class="bi bi-cupcake"></i> Panadería P.mirador</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu" aria-controls="navbarMenu" aria-expanded="false" aria-label="Toggle navigation">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu"
+        aria-controls="navbarMenu" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarMenu">
@@ -81,13 +84,9 @@ $alertas = $controlador->obtenerAlertasStock();
       </tbody>
     </table>
 
-    <div class="alert alert-warning mt-4" role="alert">
-      <i class="bi bi-exclamation-triangle-fill"></i> <strong>Alerta de stock bajo:</strong> La levadura está por debajo del nivel mínimo.
-    </div>
 
-    <div class="alert alert-danger mt-2" role="alert">
-      <i class="bi bi-exclamation-octagon-fill"></i> <strong>Alerta de exceso de producto:</strong> La harina de trigo supera el límite máximo de stock.
-    </div>
+
+
   </div>
 
   <!-- Modal Registrar Insumo -->
@@ -119,39 +118,56 @@ $alertas = $controlador->obtenerAlertasStock();
           </form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Cancelar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i>
+            Cancelar</button>
           <button type="button" class="btn btn-warning"><i class="bi bi-save"></i> Guardar</button>
         </div>
       </div>
     </div>
   </div>
-<div class="container mt-4">
-    <h2 class="fw-bold mb-3"><i class="bi bi-exclamation-triangle-fill"></i> Alertas de Stock Bajo</h2>
+  <div class="container mt-4">
+    <h2 class="fw-bold mb-3"><i class="bi bi-exclamation-triangle-fill"></i> Alertas de Stock</h2>
 
-    
-<table class="table table-bordered">
-  <thead class="table-warning">
-    <tr>
-      <th>Nombre</th>
-      <th>Cantidad Disponible</th>
-      <th>Stock Mínimo</th>
-    </tr>
-  </thead>
-  <tbody>
-    <?php if (!empty($alertas)): ?>
-      <?php foreach ($alertas as $m): ?>
+
+    <table class="table table-bordered">
+      <thead class="table-warning">
         <tr>
-          <td><?= htmlspecialchars($m->getNombre()) ?></td>
-          <td><?= htmlspecialchars($m->getCantidad()) ?></td>
-          <td><?= htmlspecialchars($m->getStockMinimo()) ?></td>
+          <th>Nombre</th>
+          <th>Cantidad Disponible</th>
+          <th>Stock</th>
+          <th>Causa</th>
         </tr>
-      <?php endforeach; ?>
-    <?php else: ?>
-      <tr><td colspan="3" class="text-center">No hay alertas de stock bajo.</td></tr>
-    <?php endif; ?>
-  </tbody>
-</table>
-</div>
+      </thead>
+      <tbody>
+        <?php if (!empty($alertas)): ?>
+          <?php foreach ($alertas as $m): ?>
+            <tr>
+              <td><?= htmlspecialchars($m->getNombre()) ?></td>
+              <td><?= htmlspecialchars($m->getCantidad()) ?></td>
+              <td><?= htmlspecialchars($m->getStockMinimo()) ?></td>
+              <?php
+              if (strcasecmp(htmlspecialchars($m->getCausa()), 'Stock muy bajo')) {
+                echo "<td><div class='alert alert-danger mt-2' role='alert'>
+      <i class='bi bi-exclamation-octagon-fill'></i> <strong>Alerta de exceso de producto</strong>
+    </div></td>";
+              } else {
+
+                echo "<td class= ><div class='alert alert-warning mt-4' role='alert'>
+      <i class='bi bi-exclamation-triangle-fill'></i> <strong>Alerta de stock bajo</strong>
+    </div></td>";
+              } ?>
+
+            </tr>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <tr>
+            <td colspan="3" class="text-center">No hay alertas de stock.</td>
+          </tr>
+        <?php endif; ?>
+      </tbody>
+    </table>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
