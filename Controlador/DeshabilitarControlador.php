@@ -7,7 +7,7 @@
 require_once 'Modelo/Deshabilitar.php';
 require_once 'Modelo/Conexion.php';
 
-class DeshabilitarController {
+class DeshabilitarControlador {
     
     private $db;
     private $deshabilitar;
@@ -26,7 +26,7 @@ class DeshabilitarController {
         $mercancias_deshabilitadas = $this->deshabilitar->obtenerMercanciasDeshabilitadas();
         
         // Cargar la vista
-        require_once 'views/inventario/index.php';
+        require_once '/inventario/index.php';
     }
     
     /**
@@ -190,7 +190,7 @@ class DeshabilitarController {
 
 // Enrutamiento simple
 if (isset($_GET['action'])) {
-    $controller = new DeshabilitarController();
+    $controller = new DeshabilitarControlador();
     $action = $_GET['action'];
     
     switch($action) {
@@ -213,7 +213,7 @@ if (isset($_GET['action'])) {
             $controller->index();
     }
 } else {
-    $controller = new DeshabilitarController();
+    $controller = new DeshabilitarControlador();
     $controller->index();
 }
 ?>
