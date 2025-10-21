@@ -3,40 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <title>Historial de Compras del Cliente</title>
-    <link rel="stylesheet" href="../css/estilos.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <h2>Historial de Compras del Cliente</h2>
+<body class="bg-light">
+
+<div class="container mt-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">
+            <i class="fa-solid fa-receipt me-2"></i>Historial de Compras del Cliente
+        </h2>
+        <a href="../provisionalIndex.php" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Volver al menú
+        </a>
+    </div>
 
     <?php if (empty($historial)): ?>
-        <p>No hay compras registradas para este cliente.</p>
+        <div class="alert alert-warning text-center" role="alert">
+            <i class="fa-solid fa-circle-exclamation me-2"></i>
+            No hay compras registradas para este cliente.
+        </div>
     <?php else: ?>
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>ID Venta</th>
-                    <th>Cliente</th>
-                    <th>Empleado</th>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Precio Unitario</th>
-                    <th>Fecha Ingreso</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($historial as $h): ?>
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-striped table-bordered align-middle">
+                <thead class="table-dark text-center">
                     <tr>
-                        <td><?= $h->getIdVenta() ?></td>
-                        <td><?= $h->getClienteNombre() . " " . $h->getClienteApellido() ?></td>
-                        <td><?= $h->getEmpleadoNombre() . " " . $h->getEmpleadoApellido() ?></td>
-                        <td><?= $h->getProductoNombre() ?></td>
-                        <td><?= $h->getCantidad() ?></td>
-                        <td>$<?= number_format($h->getPrecioUnitario(), 2) ?></td>
-                        <td><?= $h->getFechaIngreso() ?></td>
+                        <th>ID Venta</th>
+                        <th>Cliente</th>
+                        <th>Empleado</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Fecha Ingreso</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php foreach ($historial as $h): ?>
+                        <tr>
+                            <td class="text-center"><?= $h->getIdVenta() ?></td>
+                            <td><?= htmlspecialchars($h->getClienteNombre() . " " . $h->getClienteApellido()) ?></td>
+                            <td><?= htmlspecialchars($h->getEmpleadoNombre() . " " . $h->getEmpleadoApellido()) ?></td>
+                            <td><?= htmlspecialchars($h->getProductoNombre()) ?></td>
+                            <td class="text-center"><?= $h->getCantidad() ?></td>
+                            <td class="text-end">$<?= number_format($h->getPrecioUnitario(), 2) ?></td>
+                            <td class="text-center"><?= htmlspecialchars($h->getFechaIngreso()) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     <?php endif; ?>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

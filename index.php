@@ -73,6 +73,9 @@ if (!isset($_GET["pid"])) {
             <a href="index.php?pid=Vista/Deshabilitar.php" class="list-group-item list-group-item-action">
                 ⚙️ Deshabilitar Cliente
             </a>
+             <a href="index.php?pid=Vista/historialCompra.php" class="list-group-item list-group-item-action">
+                 Historial de Compra de Clientes 
+            </a>
         </div>
 
         <p class="text-center mt-4 text-muted">
