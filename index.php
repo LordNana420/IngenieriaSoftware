@@ -20,13 +20,12 @@ $paginas_sin_autenticacion = array(
     "Vista/inicio.php",
     "Vista/autenticar.php",
     "Vista/registrarCliente.php"
-    
-
 );
 
 $paginas_con_autenticacion = array(
     "Vista/sesionAdmin.php",
-    "Vista/sesionCliente.php"
+    "Vista/sesionCliente.php",
+    "Vista/Deshabilitar.php"
 );
 
 
