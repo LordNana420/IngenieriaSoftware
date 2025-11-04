@@ -1,5 +1,5 @@
 <?php
-require_once "../Modelo/ClienteDAO.php";
+require_once "Modelo/ClienteDAO.php";
 
 class ClienteControlador {
     private $clienteDAO;

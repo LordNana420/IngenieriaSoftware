@@ -1,21 +1,8 @@
 <?php
-require_once("../Controlador/MercanciaControlador.php");
+require_once("Controlador/MercanciaControlador.php");
 $controlador = new MercanciaControlador();
 $alertas = $controlador->obtenerAlertasStock();
 ?>
-
-<!DOCTYPE html>
-<html lang="es">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inventario Panadería Dulce Hogar</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-</head>
-
-<body class="bg-light">
   <nav class="navbar navbar-expand-lg navbar-dark bg-warning py-3 shadow">
     <div class="container-fluid">
       <a class="navbar-brand fw-bold fs-4" href="#"><i class="bi bi-cupcake"></i> Panadería P.mirador</a>
@@ -168,6 +155,3 @@ $alertas = $controlador->obtenerAlertasStock();
     </table>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>

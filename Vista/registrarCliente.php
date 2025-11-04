@@ -1,5 +1,5 @@
 <?php
-require_once("../Controlador/ClienteControlador.php");
+require_once("Controlador/ClienteControlador.php");
 $controlador = new ClienteControlador();
 
 $mensaje = "";
@@ -17,16 +17,6 @@ if (isset($_POST['registrar'])) {
 
 
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Registro de clientes - PMirador</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</head>
-<body class="bg-light">
   <div class="container mt-5 col-md-6">
     <div class="card shadow">
       <div class="card-header bg-warning text-dark fw-bold">Registrar Nuevo Cliente</div>
@@ -61,5 +51,3 @@ if (isset($_POST['registrar'])) {
       </div>
     </div>
   </div>
-</body>
-</html>

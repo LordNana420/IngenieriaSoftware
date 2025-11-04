@@ -8,9 +8,6 @@ if (session_status() === PHP_SESSION_NONE) {
 if (isset($_GET["salir"])) {
     session_unset();
     session_destroy();
-
-
-
     header("Location: index.php?pid=autenticar.php");
     exit;
 }
@@ -20,32 +17,17 @@ $paginas_sin_autenticacion = array(
     "Vista/inicio.php",
     "Vista/autenticar.php",
     "Vista/registrarCliente.php"
-    
 
 );
 
 $paginas_con_autenticacion = array(
     "Vista/sesionAdmin.php",
-    "Vista/sesionCliente.php"
+    "Vista/sesionEmpleado.php",
+    "Vista/historialCompra.php",
+
 );
-
-
-if(!isset($_GET["pid"])){
-    include ("presentacion/inicio.php");
-}else{
-    $pid = $_GET["pid"]; 
-
-    if(in_array($pid, $paginas_sin_autenticacion)){
-        include $pid;
-    } else if(in_array($pid, $paginas_con_autenticacion)){
-         if (!isset($_SESSION["id"])) {
-            include "Vista/autenticar.php";
-    }} else {
-        echo "error 404";
-    }
-}
-
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 
@@ -56,5 +38,27 @@ if(!isset($_GET["pid"])){
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
+
+<body>
+    <?php
+    if (!isset($_GET["pid"])) {
+        include("Vista/inicio.php");
+    } else {
+        $pid = $_GET["pid"];
+        if (in_array($pid, $paginas_sin_autenticacion)) {
+            include $pid;
+        } else if (in_array($pid, $paginas_con_autenticacion)) {
+            /*if (!isset($_SESSION["id"])) {
+                include "Vista/autenticar.php";
+            }*/
+            include $pid;
+        } else {
+            echo "error 404";
+        }
+    }
+
+    ?>
+
+</body>
 
 </html>

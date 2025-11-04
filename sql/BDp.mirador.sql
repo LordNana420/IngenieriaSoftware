@@ -354,4 +354,24 @@ UPDATE Producto SET stock_maximo = 50  WHERE idProducto = 2; -- Leche Entera 1L
 UPDATE Producto SET stock_maximo = 40  WHERE idProducto = 3; -- Detergente 1kg
 UPDATE Producto SET stock_maximo = 30  WHERE idProducto = 4; -- Galletas de Chocolate
 
+CREATE TABLE IF NOT EXISTS `Producto_has_venta` (
+  `Producto_idProducto` INT NOT NULL,
+  `Venta_idVenta` INT NOT NULL,
+  `cantidad` INT NOT NULL,
+  `Precio` INT NOT NULL,
+  PRIMARY KEY (`Producto_idProducto`, `Venta_idVenta`),
+  INDEX `fk_Producto_has_venta_Producto1_idx` (`Producto_idProducto` ASC),
+  INDEX `fk_Producto_has_venta_Venta1_idx` (`Venta_idVenta` ASC),
+  CONSTRAINT `fk_Producto_has_venta_Producto1`
+    FOREIGN KEY (`Producto_idProducto`)
+    REFERENCES `Producto` (`idProducto`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_Producto_has_venta_Venta1`
+    FOREIGN KEY (`Venta_idVenta`)
+    REFERENCES `venta` (`idVenta`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
 
