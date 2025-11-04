@@ -1,7 +1,7 @@
 <?php
 require_once("Controlador/MercanciaControlador.php");
 $controlador = new MercanciaControlador();
-$alertas = $controlador->obtenerAlertasStock();
+$alertas = $controlador->obtenerAlertasStocK();
 ?>
   <nav class="navbar navbar-expand-lg navbar-dark bg-warning py-3 shadow">
     <div class="container-fluid">

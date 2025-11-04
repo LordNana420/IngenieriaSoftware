@@ -7,7 +7,8 @@ class HistorialCompraDAO {
     private $conexion;
 
     public function __construct() {
-        $this->conexion = Conexion::conectar();
+        $conexionObj = new Conexion();
+        $this->conexion = $conexionObj->getConexion();
     }
 
     public function obtenerHistorialPorCliente($idCliente) {
@@ -38,7 +39,7 @@ class HistorialCompraDAO {
         $historial = [];
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $dto = new HistorialCompra();
+            $dto = new HistorialCompras();
             $dto->setIdVenta($row['idVenta']);
             $dto->setClienteNombre($row['clienteNombre']);
             $dto->setClienteApellido($row['clienteApellido']);
