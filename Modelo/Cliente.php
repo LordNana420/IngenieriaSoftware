@@ -4,12 +4,14 @@ class Cliente {
     private $nombre;
     private $apellido;
     private $telefono;
+    private $estado;
 
-    public function __construct($id = "", $nombre = "", $apellido = "", $telefono = "") {
+    public function __construct($id = "", $nombre = "", $apellido = "", $telefono = "", $estado) {
         $this->id = $id;
         $this->nombre = $nombre;
         $this->apellido = $apellido;
         $this->telefono = $telefono;
+        $this->estado = $estado;
     }
 
     // Getters
@@ -27,6 +29,9 @@ class Cliente {
 
     public function getTelefono() {
         return $this->telefono;
+    }
+    public function getEstado() {
+        return $this->estado;
     }
 
     // Setters

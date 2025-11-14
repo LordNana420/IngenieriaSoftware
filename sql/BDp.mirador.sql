@@ -254,7 +254,7 @@ INSERT INTO Tipo (idTipo_Mercancia, Valor) VALUES
 -- ------------------------------
 -- TABLA Cliente
 -- ------------------------------
-INSERT INTO Cliente (idCliente, Nombre, Apellido, Telefono) VALUES
+INSERT INTO Cliente (idCliente, Nombre, Apellido, Telefono, estado) VALUES
 (1, 'Ana', 'Ramírez', '3001234567'),
 (2, 'Carlos', 'Gómez', '3017654321'),
 (3, 'Laura', 'Torres', '3029876543');

@@ -12,6 +12,10 @@ class ClienteControlador {
         $clienteDAO = new ClienteDAO();
         return $clienteDAO->consultarTodos();
     }
+    public function BuscarClientes($nom,$ape, $doc, $tel) {
+        $clienteDAO = new ClienteDAO();
+        return $clienteDAO->consultarPorParametros($nom,$ape, $doc, $tel);
+    }
 
     public function registrarCliente(Cliente $cliente) {
         $clienteDAO = new ClienteDAO();

@@ -2,10 +2,12 @@
 require_once("Conexion.php");
 require_once("Cliente.php");
 
-class ClienteDAO {
+class ClienteDAO
+{
     private $conexion;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->conexion = new Conexion();
         $this->conexion->abrir();
     }
@@ -13,8 +15,9 @@ class ClienteDAO {
     /**
      * 🔹 Consultar todos los clientes
      */
-    public function consultarTodos() {
-        $sql = "SELECT idCliente, Nombre, Apellido, Telefono 
+    public function consultarTodos()
+    {
+        $sql = "SELECT idCliente, Nombre, Apellido, Telefono, estado
                 FROM Cliente 
                 ORDER BY Nombre ASC";
 
@@ -27,7 +30,8 @@ class ClienteDAO {
                     $fila['idCliente'],
                     $fila['Nombre'],
                     $fila['Apellido'],
-                    $fila['Telefono']
+                    $fila['Telefono'],
+                    $fila["estado"]
                 );
             }
         }
@@ -35,16 +39,17 @@ class ClienteDAO {
         return $clientes;
     }
 
-    public function consultarPorId($idCliente) {
-        $sql = "SELECT idCliente, Nombre, Apellido, Telefono 
+    public function consultarPorId($idCliente)
+    {
+        $sql = "SELECT idCliente, Nombre, Apellido, Telefono , estado
                 FROM Cliente 
                 WHERE idCliente = ?";
-        
+
         $stmt = $this->conexion->getConexion()->prepare($sql);
         if ($stmt === false) {
             die("Error al preparar la consulta: " . $this->conexion->getConexion()->error);
         }
-        
+
         $stmt->bind_param("i", $idCliente);
         $stmt->execute();
         $resultado = $stmt->get_result();
@@ -55,17 +60,82 @@ class ClienteDAO {
                 $fila['idCliente'],
                 $fila['Nombre'],
                 $fila['Apellido'],
-                $fila['Telefono']
+                $fila['Telefono'],
+                    $fila["estado"]
             );
         }
         return null;
     }
 
+    public function consultarPorParametros($nom, $ape, $doc, $tel)
+    {
+        $sql = "SELECT idCliente, Nombre, Apellido, Telefono, estado
+                FROM Cliente
+                WHERE ";
+        if (!empty($nom) && $nom !== "0") {
+            if (!empty($ape) && $ape !== "0") {
+                $sql .= "Nombre LIKE '%" . $nom . "%' AND Apellido LIKE '" . $ape . "%'";
+            }else{
+                $sql .= "Nombre LIKE '%" . $nom . "%'";
+            }
+            
+        }
 
+        if (!empty($doc) && $doc !== "0") {
+            $sql .= "idCliente LIKE '%" . $doc . "%'";
+        }
+        if (!empty($tel) && $tel !== "0") {
+            $sql .= "Telefono LIKE '%" . $tel . "%' ";
+        }
+        $sql .= " and estado = 1 ";
+
+        $resultado = $this->conexion->getConexion()->query($sql);
+        $clientes = [];
+
+        if ($resultado && $resultado->num_rows > 0) {
+            while ($fila = $resultado->fetch_assoc()) {
+                $clientes[] = new Cliente(
+                    $fila['idCliente'],
+                    $fila['Nombre'],
+                    $fila['Apellido'],
+                    $fila['Telefono'],
+                    $fila["estado"]
+                );
+            }
+        }
+
+        return $clientes;
+    }
+
+    public function insertar($cliente)
+    {
+        $conexion = $this->conexion->getConexion();
+
+        $id = $cliente->getId();
+        $nombre = $cliente->getNombre();
+        $apellido = $cliente->getApellido();
+        $telefono = $cliente->getTelefono();
+
+        $sql = "INSERT INTO cliente (idCliente, Nombre, Apellido, Telefono, Estado) 
+            VALUES ('$id', '$nombre', '$apellido', '$telefono', 1)";
+
+        if ($conexion->query($sql)) {
+            return [
+                'exito' => true,
+                'mensaje' => 'Cliente registrado correctamente.'
+            ];
+        } else {
+            return [
+                'exito' => false,
+                'mensaje' => 'Error al registrar cliente: ' . $conexion->error
+            ];
+        }
+    }
     /**
      * 🔹 Cerrar conexión
      */
-    public function cerrarConexion() {
+    public function cerrarConexion()
+    {
         $this->conexion->cerrar();
     }
 }
