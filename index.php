@@ -27,6 +27,7 @@ $paginas_con_autenticacion = array(
     "Vista/historialCompra.php",
     "Vista/buscarClienteAjax.php",
     "Vista/registrarVenta.php",
+    "Vista/reporteVentas.php"
 );
 
 ?>
