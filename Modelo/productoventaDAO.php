@@ -57,6 +57,28 @@ class ProductoVentaDAO
 
         return $this->conexion->getConexion()->query($sql);
     }
+
+        public function obtenerDetallesPorVenta($idVenta) {
+        $sql = "SELECT pv.Producto_idProducto, pv.cantidad, pv.precio_unitario, pv.precio_total
+                FROM producto_venta pv
+                WHERE pv.Venta_idventa = '" . $idVenta . "'";
+
+        $resultado = $this->conexion->getConexion()->query($sql);
+
+        $detalles = [];
+        if ($resultado && $resultado->num_rows > 0) {
+            while ($fila = $resultado->fetch_assoc()) {
+                $detalles[] = [
+                    'Producto_idProducto' => $fila['Producto_idProducto'],
+                    'cantidad' => $fila['cantidad'],
+                    'precio_unitario' => $fila['precio_unitario'],
+                    'precio_total' => $fila['precio_total']
+                ];
+            }
+        }
+
+        return $detalles;
+    }
     public function cerrarConexion()
     {
         $this->conexion->cerrar();
