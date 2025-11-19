@@ -89,6 +89,9 @@ $paginas_con_autenticacion = array(
             <a href="?pid=Vista/registrarVenta.php" class="list-group-item list-group-item-action">
                 registrarVenta
             </a>
+            <a href="?pid=Vista/comprobanteVenta.php" class="list-group-item list-group-item-action">
+                Comprobante Venta
+            </a>
         </div>
 
         <p class="text-center mt-4 text-muted">
