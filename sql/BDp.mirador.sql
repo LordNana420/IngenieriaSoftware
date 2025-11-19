@@ -358,7 +358,9 @@ CREATE TABLE IF NOT EXISTS `Producto_has_venta` (
   `Producto_idProducto` INT NOT NULL,
   `Venta_idVenta` INT NOT NULL,
   `cantidad` INT NOT NULL,
+  `Precio_unitario` INT NOT NULL,
   `Precio` INT NOT NULL,
+  `fecha` DATETIME NOT NULL,
   PRIMARY KEY (`Producto_idProducto`, `Venta_idVenta`),
   INDEX `fk_Producto_has_venta_Producto1_idx` (`Producto_idProducto` ASC),
   INDEX `fk_Producto_has_venta_Venta1_idx` (`Venta_idVenta` ASC),
@@ -373,5 +375,12 @@ CREATE TABLE IF NOT EXISTS `Producto_has_venta` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
+
+ALTER TABLE venta 
+ADD COLUMN total INT NOT NULL;
+
+ALTER TABLE venta 
+ADD COLUMN fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
 
 

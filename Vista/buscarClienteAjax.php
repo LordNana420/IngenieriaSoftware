@@ -1,8 +1,8 @@
 <?php
 
-$doc = $_GET["d"];
-$nom = $_GET["n"];
-$tel = $_GET["t"];
+$doc = $_GET["d"]!=""?$_GET["d"]:"0";
+$nom = $_GET["n"]!=""?$_GET["n"]:"0";
+$tel = $_GET["t"]!=""?$_GET["t"]:"0";
 $nom = str_replace("%20", " ", $nom);
 $nombre_partes = explode(" ", trim($nom), 2);
 $nom = $nombre_partes[0];

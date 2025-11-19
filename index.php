@@ -26,6 +26,7 @@ $paginas_con_autenticacion = array(
     "Vista/Deshabilitar.php",
     "Vista/historialCompra.php",
     "Vista/buscarClienteAjax.php",
+    "Vista/registrarVenta.php",
 );
 
 ?>
@@ -84,6 +85,9 @@ $paginas_con_autenticacion = array(
             </a>
              <a href="?pid=Vista/historialCompra.php" class="list-group-item list-group-item-action">
                  Historial de Compra de Clientes 
+            </a>
+            <a href="?pid=Vista/registrarVenta.php" class="list-group-item list-group-item-action">
+                registrarVenta
             </a>
         </div>
 

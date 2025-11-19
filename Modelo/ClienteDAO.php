@@ -61,7 +61,7 @@ class ClienteDAO
                 $fila['Nombre'],
                 $fila['Apellido'],
                 $fila['Telefono'],
-                    $fila["estado"]
+                $fila["estado"]
             );
         }
         return null;
@@ -75,17 +75,27 @@ class ClienteDAO
         if (!empty($nom) && $nom !== "0") {
             if (!empty($ape) && $ape !== "0") {
                 $sql .= "Nombre LIKE '%" . $nom . "%' AND Apellido LIKE '" . $ape . "%'";
-            }else{
+            } else {
                 $sql .= "Nombre LIKE '%" . $nom . "%'";
             }
-            
+
         }
 
         if (!empty($doc) && $doc !== "0") {
-            $sql .= "idCliente LIKE '%" . $doc . "%'";
+            if (!empty($nom) && $nom !== "0") {
+                $sql .= " and idCliente LIKE '%" . $doc . "%'";
+            } else {
+                $sql .= "idCliente LIKE '%" . $doc . "%'";
+            }
+
         }
         if (!empty($tel) && $tel !== "0") {
-            $sql .= "Telefono LIKE '%" . $tel . "%' ";
+            if (!empty($nom) && $nom !== "0" || !empty($doc) && $doc !== "0") {
+                $sql .= " and Telefono LIKE '%" . $tel . "%'";
+            } else {
+                $sql .= "Telefono LIKE '%" . $tel . "%'";
+            }
+            
         }
         $sql .= " and estado = 1 ";
 
