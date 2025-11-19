@@ -6,128 +6,105 @@ require_once "Modelo/Venta.php";
 
 class VentaControlador
 {
-
-    /* ==========================================================
-       MOSTRAR FORMULARIO (si lo necesitas en rutas MVC)
+	/* ========================================================== 
+                        MOSTRAR FORMULARIO 
     ========================================================== */
-    public function mostrarFormulario()
-    {
-        $productoDAO = new ProductoDAO();
-        $productos = $productoDAO->consultarTodos();
-        require_once "Vista/venta/registrarVenta.php";
-    }
+	public function mostrarFormulario()
+	{
+		$productoDAO = new ProductoDAO();
+		$productos = $productoDAO->consultarTodos();
+		require_once "Vista/venta/registrarVenta.php";
+	}
 
-
-    /* ==========================================================
-       REGISTRAR VENTA COMPLETA
+	/* ========================================================== 
+                        REGISTRAR VENTA COMPLETA 
     ========================================================== */
-    public function registrar($data): array
-    {
-        try {
+	public function registrar($data)
+	{
+		try {
+			/* --------------------------------------------- VALIDACIONES BÁSICAS --------------------------------------------- */
+			if (!isset($data['cliente']) || empty($data['cliente'])) {
+				return [
+					"exito" => false,
+					"mensaje" => "Debe seleccionar un cliente válido."
+				];
+			}
 
-            /* ---------------------------------------------
-               VALIDACIONES BÁSICAS
+			if (!isset($data['producto']) || count($data['producto']) == 0) {
+				return [
+					"exito" => false,
+					"mensaje" => "Debe seleccionar al menos un producto."
+				];
+			}
+
+			/* --------------------------------------------- 
+                            CAPTURA DE DATOS 
             --------------------------------------------- */
-            if (!isset($data['cliente']) || empty($data['cliente'])) {
-                return [
-                    "exito" => false,
-                    "mensaje" => "Debe seleccionar un cliente válido."
-                ];
-            }
+			$idCliente = $data['cliente'];
+			$idEmpleado = $_SESSION['idEmpleado'] ?? 1;
+			$fecha = $data['fecha'];
+			$total = $data['total'];
+			$ventaDAO = new VentaDAO();
 
-            if (!isset($data['producto']) || count($data['producto']) == 0) {
-                return [
-                    "exito" => false,
-                    "mensaje" => "Debe seleccionar al menos un producto."
-                ];
-            }
+			/* --------------------------------------------- REGISTRAR CABECERA DE LA VENTA --------------------------------------------- */
+			$idVenta = $ventaDAO->registrarVenta(
+				new Venta($idCliente, $idEmpleado, $fecha, $total)
+			);
 
+			if (!$idVenta) {
+				return [
+					"exito" => false,
+					"mensaje" => "Error al registrar la venta."
+				];
+			}
 
-            /* ---------------------------------------------
-               CAPTURA DE DATOS
-            --------------------------------------------- */
-            $idCliente  = $data['cliente'];
-            $idEmpleado = $_SESSION['idEmpleado'] ?? 1;
-            $fecha      = $data['fecha'];
-            $total      = $data['total'];
+			/* --------------------------------------------- DAO necesarios para detalles y stock --------------------------------------------- */
+			$productoDAO = new ProductoDAO();
+			$detalleDAO  = new ProductoVentaDAO();
+			$productos   = $data['producto'];
+			$cantidades  = $data['cantidad'];
+			$precioUnitario = $data['precio_unitario'];
+			$precioTotal    = $data['precio_total'];
 
-            $ventaDAO = new VentaDAO();
+			/* --------------------------------------------- REGISTRAR DETALLES (permitir repetidos → sumar) --------------------------------------------- */
+			for ($i = 0; $i < count($productos); $i++) {
+				$idProd = $productos[$i];
+				$cant   = $cantidades[$i];
+				$pUnit  = $precioUnitario[$i];
+				$pTot   = $precioTotal[$i];
 
-            /* ---------------------------------------------
-               REGISTRAR CABECERA DE LA VENTA
-            --------------------------------------------- */
-            $idVenta = $ventaDAO->registrarVenta(
-                new Venta($idCliente, $idEmpleado, $fecha, $total)
-            );
+				// Si ya existe el producto en esta venta → sumar
+				if ($detalleDAO->existeDetalle($idVenta, $idProd)) {
+					$detalleDAO->sumarDetalle(
+						$idVenta,
+						$idProd,
+						$cant,
+						$pTot
+					);
+				} else {
+					// Si NO existe → insertar normal
+					$detalleDAO->registrarDetalle(
+						$idProd,
+						$idVenta,
+						$cant,
+						$pUnit,
+						$pTot
+					);
+				}
 
-            if (!$idVenta) {
-                return [
-                    "exito" => false,
-                    "mensaje" => "Error al registrar la venta."
-                ];
-            }
+				// Actualizar stock en inventario/mercancia
+				$productoDAO->actualizarStock($idProd, $cant);
+			}
 
-            /* ---------------------------------------------
-               DAO necesarios para detalles y stock
-            --------------------------------------------- */
-            $productoDAO = new ProductoDAO();
-            $detalleDAO  = new ProductoVentaDAO();
-
-            $productos      = $data['producto'];
-            $cantidades     = $data['cantidad'];
-            $precioUnitario = $data['precio_unitario'];
-            $precioTotal    = $data['precio_total'];
-
-
-            /* ---------------------------------------------
-               REGISTRAR DETALLES (permitir repetidos → sumar)
-            --------------------------------------------- */
-            for ($i = 0; $i < count($productos); $i++) {
-
-                $idProd = $productos[$i];
-                $cant   = $cantidades[$i];
-                $pUnit  = $precioUnitario[$i];
-                $pTot   = $precioTotal[$i];
-
-                // Si ya existe el producto en esta venta → sumar
-                if ($detalleDAO->existeDetalle($idVenta, $idProd)) {
-
-                    $detalleDAO->sumarDetalle(
-                        $idVenta,
-                        $idProd,
-                        $cant,
-                        $pTot
-                    );
-
-                } else {
-
-                    // Si NO existe → insertar normal
-                    $detalleDAO->registrarDetalle(
-                        $idProd,
-                        $idVenta,
-                        $cant,
-                        $pUnit,
-                        $pTot
-                    );
-                }
-
-                // Actualizar stock en inventario/mercancia
-                $productoDAO->actualizarStock($idProd, $cant);
-            }
-
-
-            return [
-                "exito" => true,
-                "mensaje" => "Venta registrada correctamente"
-            ];
-
-        } catch (Exception $e) {
-
-            return [
-                "exito" => false,
-                "mensaje" => "ERROR: " . $e->getMessage()
-            ];
-        }
-    }
-
+			return [
+				"exito" => true,
+				"mensaje" => "Venta registrada correctamente"
+			];
+		} catch (Exception $e) {
+			return [
+				"exito" => false,
+				"mensaje" => "ERROR: " . $e->getMessage()
+			];
+		}
+	}
 }
