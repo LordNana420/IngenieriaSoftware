@@ -44,7 +44,7 @@ if (!isset($_GET["pid"])) {
                     🛠️ Sesión Administrador
                 </a>
                 <a href="provisionalIndex.php?pid=Vista/Deshabilitar.php" class="list-group-item list-group-item-action">
-                    ⚙️ Deshabilitar Cliente
+                    ⚙️ Deshabilitar Mercancia
                 </a>
                 <a href="provisionalIndex.php?pid=Vista/historialCompra.php" class="list-group-item list-group-item-action">
                     📜 Consulta Historial de Compras
