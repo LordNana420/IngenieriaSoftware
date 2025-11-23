@@ -3,9 +3,8 @@
  * Controlador DeshabilitarController
  * Maneja las peticiones relacionadas con deshabilitar/habilitar mercancías
  */
-
-require_once 'Modelo/Deshabilitar.php';
-require_once 'Modelo/Conexion.php';
+require_once __DIR__ . "/../Modelo/DeshabilitarMercancia.php";
+require_once __DIR__ . "/../Modelo/Conexion.php";
 
 class DeshabilitarControlador {
     
@@ -13,10 +12,11 @@ class DeshabilitarControlador {
     private $deshabilitar;
     
     public function __construct() {
-        $database = new Conexion();
-        $this->db = $database->getConexion();
-        $this->deshabilitar = new Deshabilitar($this->db);
-    }
+    $this->db = new Conexion();
+    $this->db->abrir(); 
+    $this->deshabilitar = new Deshabilitar($this->db);
+}
+
     
     /**
      * Muestra la vista del inventario con mercancías activas

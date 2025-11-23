@@ -1,14 +1,14 @@
 <?php
-require_once 'conexion.php';
-require_once 'HistorialCompraDTO.php';
+require_once __DIR__ . '/Conexion.php';
+require_once __DIR__ . '/../Modelo/HistorialCompras.php';
 
-class HistorialCompraDAO {
+class HistorialComprasDAO {
 
     private $conexion;
 
     public function __construct() {
         $conexionObj = new Conexion();
-        $this->conexion = $conexionObj->getConexion();
+        $this->conexion->abrir();
     }
 
     public function obtenerHistorialPorCliente($idCliente) {

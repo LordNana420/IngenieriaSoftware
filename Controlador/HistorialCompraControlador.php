@@ -1,10 +1,11 @@
 <?php
-require_once '../modelo/HistorialCompraDAO.php';
+require_once __DIR__ . "/../Modelo/HistorialComprasDAO.php";
+
 
 class HistorialCompraControlador {
 
     public function mostrarHistorialCliente($idCliente) {
-        $dao = new HistorialCompraDAO();
+        $dao = new HistorialComprasDAO();
         $historial = $dao->obtenerHistorialPorCliente($idCliente);
         include '../vista/historial_cliente_vista.php';
     }

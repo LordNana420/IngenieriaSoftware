@@ -1,5 +1,5 @@
 <?php
-require_once("Modelo/MercanciaDAO.php");
+require_once __DIR__ . "/../Modelo/MercanciaDAO.php";
 
 class MercanciaControlador {
     private $mercanciaDAO;

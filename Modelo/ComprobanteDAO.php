@@ -7,8 +7,8 @@ class ComprobanteDAO
 
     public function __construct()
     {
-  
-        $this->conexion = (new Conexion())->getConexion();
+        $conexionObj = new Conexion();
+        $this->conexion->abrir();
     }
 
     public function registrarComprobante(Comprobante $c)
