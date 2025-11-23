@@ -4,10 +4,7 @@ require_once __DIR__ . "/../Modelo/ProductoDAO.php";
 require_once __DIR__ . "/../Modelo/ProductoVentaDAO.php";
 require_once __DIR__ . "/../Modelo/Venta.php";
 require_once __DIR__ . "/../Modelo/ComprobanteDAO.php";
-require_once __DIR__ . '/../Librerias/dompdf/autoload.inc.php';
-
-
-
+require_once __DIR__ . '/../Librerias/vendor/autoload.php';
 
 
 class VentaControlador
@@ -160,13 +157,14 @@ class VentaControlador
 
     /** Exportar PDF */
     public function exportarPDF($reporte)
-    {
-        require_once "Libs/dompdf/autoload.inc.php";
-        $dompdf = new \Dompdf\Dompdf();
-        $dompdf->loadHtml($reporte);
-        $dompdf->render();
-        $dompdf->stream("reporte_ventas.pdf");
-    }
+{
+    require_once __DIR__ . '/../Librerias/vendor/autoload.php';
+
+    $mpdf = new \Mpdf\Mpdf();
+
+    $mpdf->WriteHTML($reporte);
+    $mpdf->Output('reporte_ventas.pdf', 'I'); // Mostrar en navegador
+}
 
 
     /** Exportar Excel */
