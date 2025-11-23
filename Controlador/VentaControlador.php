@@ -1,11 +1,10 @@
 <?php
-require_once "Modelo/VentaDAO.php";
-require_once "Modelo/ProductoDAO.php";
-require_once "Modelo/ProductoVentaDAO.php";
-require_once "Modelo/Venta.php";
-require_once "Modelo/DetalleVenta.php";        // NUEVO
-require_once "Modelo/ComprobanteDAO.php";      // NUEVO
-require_once 'vendor/autoload.php';
+require_once __DIR__ . "/../Modelo/VentaDAO.php";
+require_once __DIR__ . "/../Modelo/ProductoDAO.php";
+require_once __DIR__ . "/../Modelo/ProductoVentaDAO.php";
+require_once __DIR__ . "/../Modelo/Venta.php";
+require_once __DIR__ . "/../Modelo/ComprobanteDAO.php";
+require_once __DIR__ . '/../Librerias/dompdf/autoload.inc.php';
 
 
 
