@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/../Modelo/ClienteDAO.php";
+require_once __DIR__ . "/../Modelo/Cliente.php"; // si lo necesitas también
 
 
 class ClienteControlador {

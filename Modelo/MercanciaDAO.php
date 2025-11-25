@@ -59,8 +59,6 @@ class MercanciaDAO
                     $fila['Cantidad_Mercancia'],
                     $fila['Stock_Minimo'],
                     'Stock muy bajo'
-
-
                 );
             }
         }
@@ -86,181 +84,160 @@ class MercanciaDAO
         return $alertas;
     }
 
-    private function obtenerEstadoDeshabilitadoId()
+    // Registrar nuevo insumo y movimiento de entrada
+    public function registrarInsumo(Mercancia $m, $responsable)
     {
-        $sql = "SELECT idEstado_Mercancia 
-            FROM Estado_Mercancia 
-            WHERE Valor = 'Deshabilitado' 
-            LIMIT 1";
+        // Preparar datos en variables
+        $nombre       = $m->getNombre();
+        $fechaVenc    = $m->getFechaVencimiento();
+        $fechaIngreso = $m->getFechaIngreso();
+        $cantidad     = $m->getCantidad();
+        $precioUnit   = $m->getPrecioUnitario();
+        $estadoId     = $m->getEstadoId();
+        $tipoId       = $m->getTipoId();
+        $inventarioId = $m->getInventarioId();
+        $stockMin     = $m->getStockMinimo();
+        $stockMax     = $m->getStockMaximo();
 
-        $resultado = $this->conexion->getConexion()->query($sql);
+        // Insertar mercancia
+        $sql = "INSERT INTO mercancia
+            (Nombre, Fecha_vencimiento, Fecha_Ingreso, Cantidad_Mercancia, Precio_Unitario, Estado_Mercancia_idEstado_Mercancia, Tipo_idEstado_Tipo, Inventario_idInventario, Stock_Minimo, Stock_Maximo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        if ($resultado && $resultado->num_rows > 0) {
-            $fila = $resultado->fetch_assoc();
-            return $fila['idEstado_Mercancia'];
+        $stmt = $this->conexion->getConexion()->prepare($sql);
+        $stmt->bind_param(
+            "sssiiiiiii",
+            $nombre,
+            $fechaVenc,
+            $fechaIngreso,
+            $cantidad,
+            $precioUnit,
+            $estadoId,
+            $tipoId,
+            $inventarioId,
+            $stockMin,
+            $stockMax
+        );
+
+        $resultado = $stmt->execute();
+
+        if ($resultado) {
+            $idProducto = $this->conexion->getConexion()->insert_id;
+
+            // Insertar movimiento de entrada
+            $tipoMovimiento   = 'entrada';
+            $fechaMovimiento  = date('Y-m-d H:i:s');
+            $stmt2 = $this->conexion->getConexion()->prepare(
+                "INSERT INTO movimientos_inventario (idProducto, tipo, cantidad, fecha, responsable)
+                 VALUES (?, ?, ?, ?, ?)"
+            );
+            $stmt2->bind_param("isiss", $idProducto, $tipoMovimiento, $cantidad, $fechaMovimiento, $responsable);
+            $stmt2->execute();
         }
 
-        // Si no existe, lo crea
-        $sqlInsert = "INSERT INTO Estado_Mercancia (Valor) VALUES ('Deshabilitado')";
-        if ($this->conexion->getConexion()->query($sqlInsert)) {
-            return $this->conexion->getConexion()->insert_id;
-        }
-
-        return null;
+        return $resultado;
     }
 
-    private function mercanciaEstaActiva($idMercancia)
+    public function deshabilitarMercancia($id)
     {
-        $sql = "
-        SELECT m.idMercancia
-        FROM Mercancia m
-        INNER JOIN Estado_Mercancia em 
-            ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
-        WHERE m.idMercancia = $idMercancia
-          AND em.Valor != 'Deshabilitado'
-        LIMIT 1
-    ";
+        $sql = "UPDATE mercancia 
+                SET Estado_Mercancia_idEstado_Mercancia = 
+                    (SELECT idEstado_Mercancia FROM estado_mercancia WHERE Valor = 'Deshabilitado')
+                WHERE idMercancia = ?";
 
-        $resultado = $this->conexion->getConexion()->query($sql);
+        $stmt = $this->conexion->getConexion()->prepare($sql);
+        $stmt->bind_param("i", $id);
 
-        return ($resultado && $resultado->num_rows > 0);
+        return $stmt->execute();
     }
 
-    public function deshabilitarMercancia($idMercancia, $motivo = "")
+    public function habilitarMercancia($id)
     {
+        $sql = "UPDATE mercancia 
+                SET Estado_Mercancia_idEstado_Mercancia = 
+                    (SELECT idEstado_Mercancia FROM estado_mercancia WHERE Valor = 'Activo')
+                WHERE idMercancia = ?";
 
-        // Validar si está activa
-        if (!$this->mercanciaEstaActiva($idMercancia)) {
-            return false;
-        }
+        $stmt = $this->conexion->getConexion()->prepare($sql);
+        $stmt->bind_param("i", $id);
 
-        // Obtener estado "Deshabilitado"
-        $estadoId = $this->obtenerEstadoDeshabilitadoId();
-        if ($estadoId === null) {
-            return false;
-        }
-
-        $sql = "
-        UPDATE Mercancia
-        SET Estado_Mercancia_idEstado_Mercancia = $estadoId
-        WHERE idMercancia = $idMercancia
-    ";
-
-        return $this->conexion->getConexion()->query($sql);
-    }
-
-    private function mercanciaEstaDeshabilitada($idMercancia)
-    {
-        $sql = "
-        SELECT m.idMercancia
-        FROM Mercancia m
-        INNER JOIN Estado_Mercancia em 
-            ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
-        WHERE m.idMercancia = $idMercancia
-          AND em.Valor = 'Deshabilitado'
-        LIMIT 1
-    ";
-
-        $resultado = $this->conexion->getConexion()->query($sql);
-
-        return ($resultado && $resultado->num_rows > 0);
-    }
-
-    public function habilitarMercancia($idMercancia)
-    {
-
-        if (!$this->mercanciaEstaDeshabilitada($idMercancia)) {
-            return false;
-        }
-
-        // Obtener estado "Disponible"
-        $sql = "
-        SELECT idEstado_Mercancia 
-        FROM Estado_Mercancia 
-        WHERE Valor = 'Disponible' 
-        LIMIT 1
-    ";
-        $resultado = $this->conexion->getConexion()->query($sql);
-        $fila = $resultado->fetch_assoc();
-        $idEstadoDisponible = $fila['idEstado_Mercancia'];
-
-        // Actualizar
-        $sqlUpdate = "
-        UPDATE Mercancia
-        SET Estado_Mercancia_idEstado_Mercancia = $idEstadoDisponible
-        WHERE idMercancia = $idMercancia
-    ";
-
-        return $this->conexion->getConexion()->query($sqlUpdate);
+        return $stmt->execute();
     }
 
     public function obtenerMercanciasActivas()
     {
-        $sql = "
-        SELECT m.*, em.Valor AS Estado
-        FROM Mercancia m
-        INNER JOIN Estado_Mercancia em 
-            ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
-        WHERE em.Valor != 'Deshabilitado'
-        ORDER BY m.Nombre ASC
-    ";
+        $sql = "SELECT m.*, 
+                   em.Valor AS Estado, 
+                   t.Valor AS Tipo, 
+                   i.Inventariocol AS Ubicacion
+            FROM mercancia m
+            INNER JOIN estado_mercancia em 
+                ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
+            INNER JOIN tipo t 
+                ON m.Tipo_idEstado_Tipo = t.idTipo_Mercancia
+            INNER JOIN inventario i 
+                ON m.Inventario_idInventario = i.idInventario
+            WHERE em.Valor != 'Deshabilitado'
+            ORDER BY m.Nombre ASC";
 
-        $resultado = $this->conexion->getConexion()->query($sql);
+        $this->conexion->ejecutar($sql);
 
-        $lista = [];
-        while ($fila = $resultado->fetch_assoc()) {
-            $lista[] = $fila;
+        $datos = [];
+        while ($fila = $this->conexion->registro()) {
+            $datos[] = $fila;
         }
-        return $lista;
+
+        return $datos;
     }
 
     public function obtenerMercanciasDeshabilitadas()
     {
-        $sql = "
-        SELECT m.*, em.Valor AS Estado
-        FROM Mercancia m
-        INNER JOIN Estado_Mercancia em 
-            ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
-        WHERE em.Valor = 'Deshabilitado'
-        ORDER BY m.Nombre ASC
-    ";
+        $sql = "SELECT m.*, 
+                   em.Valor AS Estado, 
+                   t.Valor AS Tipo, 
+                   i.Inventariocol AS Ubicacion
+            FROM mercancia m
+            INNER JOIN estado_mercancia em 
+                ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
+            INNER JOIN tipo t 
+                ON m.Tipo_idEstado_Tipo = t.idTipo_Mercancia
+            INNER JOIN inventario i 
+                ON m.Inventario_idInventario = i.idInventario
+            WHERE em.Valor = 'Deshabilitado'
+            ORDER BY m.Nombre ASC";
 
-        $resultado = $this->conexion->getConexion()->query($sql);
+        $this->conexion->ejecutar($sql);
 
-        $lista = [];
-        while ($fila = $resultado->fetch_assoc()) {
-            $lista[] = $fila;
+        $datos = [];
+        while ($fila = $this->conexion->registro()) {
+            $datos[] = $fila;
         }
-        return $lista;
-    }
+
+        return $datos;
+    }   
 
     public function obtenerDetallesMercancia($id)
     {
-        $id = $this->conexion->getConexion()->real_escape_string($id);
+        $sql = "SELECT m.*, 
+                   em.Valor AS Estado, 
+                   t.Valor AS Tipo, 
+                   i.Inventariocol AS Ubicacion
+            FROM mercancia m
+            INNER JOIN estado_mercancia em 
+                ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
+            INNER JOIN tipo t 
+                ON m.Tipo_idEstado_Tipo = t.idTipo_Mercancia
+            INNER JOIN inventario i 
+                ON m.Inventario_idInventario = i.idInventario
+            WHERE m.idMercancia = ?";
 
-        $sql = "SELECT * FROM mercancia WHERE idMercancia = $id LIMIT 1";
-        $this->conexion->ejecutar($sql);
+        $stmt = $this->conexion->getConexion()->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
 
-        return $this->conexion->registro();
+        $resultado = $stmt->get_result();
+        return $resultado->fetch_assoc();
     }
-
-    public function deshabilitarLote($ids)
-    {
-        $ids_limpios = array_map(function ($id) {
-            return intval($id);
-        }, $ids);
-
-        $lista = implode(",", $ids_limpios);
-
-        $sql = "UPDATE mercancia SET estado = 0 WHERE idMercancia IN ($lista)";
-        $this->conexion->ejecutar($sql);
-
-        return true;
-    }
-
-
-
-
 
 
     public function cerrarConexion()

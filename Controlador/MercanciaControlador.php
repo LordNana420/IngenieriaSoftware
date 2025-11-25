@@ -104,28 +104,6 @@ class MercanciaControlador {
         ]);
     }
 
-    public function deshabilitarLote() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            return $this->json(['success' => false, 'message' => 'Método no permitido'], 405);
-        }
-
-        if (!isset($_POST['ids']) || !is_array($_POST['ids'])) {
-            return $this->json(['success' => false, 'message' => 'IDs inválidos'], 400);
-        }
-
-        $ids = array_map(function($id) {
-            return filter_var($id, FILTER_SANITIZE_NUMBER_INT);
-        }, $_POST['ids']);
-
-        $resultado = $this->mercanciaDAO->deshabilitarLote($ids);
-
-        return $this->json([
-            'success' => true,
-            'message' => 'Proceso de deshabilitación de lote completado.',
-            'resultado' => $resultado
-        ]);
-    }
-
 
     /* ======================================================
      * RESPUESTA JSON
