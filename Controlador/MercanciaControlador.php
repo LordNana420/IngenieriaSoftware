@@ -1,148 +1,84 @@
 <?php
 require_once __DIR__ . "/../Modelo/MercanciaDAO.php";
-require_once __DIR__ . "/../Modelo/Conexion.php";
+require_once __DIR__ . "/../Modelo/Mercancia.php";
 
-class MercanciaControlador {
+class MercanciaControlador
+{
+    private $dao;
 
-    private $mercanciaDAO;
-    private $db;
-
-    public function __construct() {
-        $this->db = new Conexion();
-        $this->db->abrir();
-
-        $this->mercanciaDAO = new MercanciaDAO($this->db);
+    public function __construct()
+    {
+        $this->dao = new MercanciaDAO();
+        $this->procesarPost(); // Procesar registro si viene POST
     }
 
-    /* ======================================================
-     * EXISTENTE
-     * ====================================================== */
-
-    public function obtenerAlertasStock() {
-        return $this->mercanciaDAO->consultarStock();
+    /**
+     * Obtener todos los productos
+     */
+    public function obtenerTodos()
+    {
+        return $this->dao->consultarTodos();
     }
 
-    public function cerrarConexion() {
-        $this->mercanciaDAO->cerrarConexion();
+    /**
+     * Obtener alertas de stock bajo
+     */
+    public function obtenerAlertasStock()
+    {
+        return $this->dao->consultarStock();
     }
 
+    /**
+     * Registrar un nuevo insumo
+     */
+    public function registrarInsumo($data)
+    {
+        $responsable = $data['responsable'] ?? 'Desconocido';
 
-    /* ======================================================
-     * MÉTODOS DE INVENTARIO (DESHABILITAR/HABILITAR)
-     * ====================================================== */
+        $mercancia = new Mercancia(
+            null, // ID nulo para auto_increment
+            $data['nombre'] ?? '',
+            $data['cantidad'] ?? 0,
+            $data['stock_minimo'] ?? 0,
+            $data['stock_maximo'] ?? 0,
+            '', // causa (para alertas)
+            $data['fecha_ingreso'] ?? date('Y-m-d'),
+            $data['fecha_vencimiento'] ?? '',
+            $data['precio_unitario'] ?? 0,
+            $data['estado_id'] ?? 1,
+            $data['tipo_id'] ?? 1,
+            $data['inventario_id'] ?? 1
+        );
 
-    public function index() {
-        $mercancias_activas = $this->mercanciaDAO->obtenerMercanciasActivas();
-        $mercancias_deshabilitadas = $this->mercanciaDAO->obtenerMercanciasDeshabilitadas();
-
-        require_once __DIR__ . '/../Vista/inventario/index.php';
+        return $this->dao->registrarInsumo($mercancia, $responsable);
     }
 
-    public function deshabilitar() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            return $this->json(['success' => false, 'message' => 'Método no permitido'], 405);
+    /**
+     * Procesar formulario POST para registrar insumo
+     */
+    private function procesarPost()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['accion'])) {
+            $accion = $_POST['accion'];
+
+            if ($accion === 'registrar') {
+                $this->registrarInsumo($_POST);
+                // Redirigir para evitar resubmission
+                header("Location: ../Vista/MercanciaRegistro.php");
+                exit();
+            }
         }
-
-        if (!isset($_POST['idMercancia']) || empty($_POST['idMercancia'])) {
-            return $this->json(['success' => false, 'message' => 'ID inválido'], 400);
-        }
-
-        $id = filter_var($_POST['idMercancia'], FILTER_SANITIZE_NUMBER_INT);
-
-        if ($this->mercanciaDAO->deshabilitarMercancia($id)) {
-            return $this->json([
-                'success' => true,
-                'message' => 'Mercancía deshabilitada correctamente',
-                'idMercancia' => $id
-            ]);
-        }
-
-        return $this->json([
-            'success' => false,
-            'message' => 'Error al deshabilitar la mercancía.'
-        ], 400);
     }
 
-    public function habilitar() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            return $this->json(['success' => false, 'message' => 'Método no permitido'], 405);
-        }
-
-        if (!isset($_POST['idMercancia']) || empty($_POST['idMercancia'])) {
-            return $this->json(['success' => false, 'message' => 'ID inválido'], 400);
-        }
-
-        $id = filter_var($_POST['idMercancia'], FILTER_SANITIZE_NUMBER_INT);
-
-        if ($this->mercanciaDAO->habilitarMercancia($id)) {
-            return $this->json([
-                'success' => true,
-                'message' => 'Mercancía habilitada correctamente',
-                'idMercancia' => $id
-            ]);
-        }
-
-        return $this->json(['success' => false, 'message' => 'Error al habilitar mercancía'], 400);
-    }
-
-    public function detalles() {
-        if (!isset($_GET['id']) || empty($_GET['id'])) {
-            return $this->json(['success' => false, 'message' => 'ID no proporcionado'], 400);
-        }
-
-        $id = filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT);
-
-        $detalles = $this->mercanciaDAO->obtenerDetallesMercancia($id);
-
-        if ($detalles) {
-            return $this->json(['success' => true, 'data' => $detalles]);
-        }
-
-        return $this->json(['success' => false, 'message' => 'Mercancía no encontrada'], 404);
-    }
-
-    public function listarDeshabilitadas() {
-        $lista = $this->mercanciaDAO->obtenerMercanciasDeshabilitadas();
-
-        return $this->json([
-            'success' => true,
-            'data' => $lista,
-            'total' => count($lista)
-        ]);
-    }
-
-    public function deshabilitarLote() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            return $this->json(['success' => false, 'message' => 'Método no permitido'], 405);
-        }
-
-        if (!isset($_POST['ids']) || !is_array($_POST['ids'])) {
-            return $this->json(['success' => false, 'message' => 'IDs inválidos'], 400);
-        }
-
-        $ids = array_map(function($id) {
-            return filter_var($id, FILTER_SANITIZE_NUMBER_INT);
-        }, $_POST['ids']);
-
-        $resultado = $this->mercanciaDAO->deshabilitarLote($ids);
-
-        return $this->json([
-            'success' => true,
-            'message' => 'Proceso de deshabilitación de lote completado.',
-            'resultado' => $resultado
-        ]);
-    }
-
-
-    /* ======================================================
-     * RESPUESTA JSON
-     * ====================================================== */
-
-    private function json($data, $status = 200) {
-        http_response_code($status);
-        header("Content-Type: application/json; charset=utf-8");
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
-        exit;
+    /**
+     * Cerrar conexión a la base de datos
+     */
+    public function cerrarConexion()
+    {
+        $this->dao->cerrarConexion();
     }
 }
+
+// Instanciar controlador para procesar POST automáticamente
+$controlador = new MercanciaControlador();
 ?>
