@@ -141,9 +141,32 @@ class ClienteDAO
             ];
         }
     }
-    /**
-     * 🔹 Cerrar conexión
-     */
+
+    public function listarClientes()
+    {
+        $sql = "SELECT idCliente, Nombre, Apellido, Telefono, estado
+                FROM Cliente 
+                WHERE estado = 1
+                ORDER BY Nombre ASC";
+
+        $resultado = $this->conexion->getConexion()->query($sql);
+        $clientes = [];
+
+        if ($resultado && $resultado->num_rows > 0) {
+            while ($fila = $resultado->fetch_assoc()) {
+                $clientes[] = new Cliente(
+                    $fila['idCliente'],
+                    $fila['Nombre'],
+                    $fila['Apellido'],
+                    $fila['Telefono'],
+                    $fila["estado"]
+                );
+            }
+        }
+
+        return $clientes;
+    }
+
     public function cerrarConexion()
     {
         $this->conexion->cerrar();

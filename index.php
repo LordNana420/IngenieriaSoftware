@@ -30,6 +30,7 @@ $paginas_con_autenticacion = array(
     "Vista/reporteVentas.php",
     "Vista/Venta.php",   
     "Vista/NuevaVenta.php",
+    "Vista/Mercancia.php",
 );
 
 ?>
@@ -92,8 +93,8 @@ $paginas_con_autenticacion = array(
             <a href="?pid=Vista/Venta.php" class="list-group-item list-group-item-action">
                 Venta
             </a>
-            <a href="?pid=Vista/comprobanteVenta.php" class="list-group-item list-group-item-action">
-                Comprobante Venta
+            <a href="?pid=Vista/Mercancia.php" class="list-group-item list-group-item-action">
+                Mercancia
             </a>
         </div>
 

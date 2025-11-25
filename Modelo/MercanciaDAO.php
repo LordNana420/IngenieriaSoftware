@@ -77,6 +77,33 @@ class MercanciaDAO
         return $alertas;
     }
 
+    public function registrarInsumo(Mercancia $mercancia, $responsable)
+    {
+        // Capturar campos del objeto Mercancia
+        $nombre      = $mercancia->getNombre();
+        $cantidad    = $mercancia->getCantidad();
+        $stockMinimo = $mercancia->getStockMinimo();
+        $causa       = $mercancia->getCausa();
+
+        // Sentencia SQL
+        $sql = "
+            INSERT INTO mercancia (nombre, cantidad, stock_minimo, causa, responsable)
+            VALUES ('$nombre', $cantidad, $stockMinimo, '$causa', '$responsable')
+        ";
+
+        // Ejecutar consulta
+        $this->conexion->ejecutar($sql);
+
+        // Verificar si se insertó
+        if ($this->conexion->getConexion()->affected_rows > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+   
+
     private function obtenerEstadoDeshabilitadoId()
     {
         $sql = "SELECT idEstado_Mercancia 
@@ -234,24 +261,6 @@ class MercanciaDAO
 
         return $this->conexion->registro();
     }
-
-    public function deshabilitarLote($ids)
-    {
-        $ids_limpios = array_map(function ($id) {
-            return intval($id);
-        }, $ids);
-
-        $lista = implode(",", $ids_limpios);
-
-        $sql = "UPDATE mercancia SET estado = 0 WHERE idMercancia IN ($lista)";
-        $this->conexion->ejecutar($sql);
-
-        return true;
-    }
-
-
-
-
 
 
     public function cerrarConexion()
