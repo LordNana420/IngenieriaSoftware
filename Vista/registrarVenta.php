@@ -1,7 +1,6 @@
 <?php
-require_once __DIR__ . "/../Controlador/VentaControlador.php";
-require_once __DIR__ . "/../Controlador/ProductoControlador.php";
-
+require_once("Controlador/VentaControlador.php");
+require_once("Controlador/ProductoControlador.php");
 
 // Controladores
 $controlProducto = new ProductoControlador();
@@ -30,25 +29,15 @@ if (isset($_POST['registrar'])) {
         if (is_array($resultado)) {
             $mensaje = $resultado["mensaje"];
             $exito = $resultado["exito"];
-
-            if ($exito) {
-                // --- Generar comprobante automáticamente ---
-                if (isset($resultado['idVenta'])) { // suponiendo que tu método registrar retorna el ID de la venta
-                    $idVenta = $resultado['idVenta'];
-                    $idCajero = $_POST['cliente']; // o el ID del empleado/cajero según tu lógica
-                    $controlVenta->generarComprobante($idVenta, $idCajero);
-                }
-                // ------------------------------------------
-            }
         } else {
             $mensaje = "Error inesperado al registrar la venta.";
             $exito = false;
         }
+
     } else {
         $mensaje = "Debe seleccionar al menos un producto y un cliente válido.";
         $exito = false;
     }
-    
 }
 ?>
 
@@ -169,15 +158,15 @@ if (isset($_POST['registrar'])) {
     }
 
     // al cargar: inicializar la fila existente
-    $(document).ready(function() {
-        $("#tablaProductos tbody tr").each(function() {
+    $(document).ready(function () {
+        $("#tablaProductos tbody tr").each(function () {
             inicializarFila($(this));
         });
         calcularTotalGeneral();
     });
 
     // Agregar nueva fila
-    $("#agregar").click(function() {
+    $("#agregar").click(function () {
 
         let fila = `
         <tr>
@@ -214,20 +203,20 @@ if (isset($_POST['registrar'])) {
     });
 
     // Eliminar fila
-    $(document).on("click", ".eliminar", function() {
+    $(document).on("click", ".eliminar", function () {
         $(this).closest("tr").remove();
         calcularTotalGeneral();
     });
 
     // Colocar precio unitario al seleccionar producto (funciona para filas nuevas y existentes)
-    $(document).on("change", ".producto", function() {
+    $(document).on("change", ".producto", function () {
         let $fila = $(this).closest("tr");
         inicializarFila($fila);
         calcularTotalGeneral();
     });
 
     // Recalcular al cambiar cantidad
-    $(document).on("keyup change", ".cantidad", function() {
+    $(document).on("keyup change", ".cantidad", function () {
         let $fila = $(this).closest("tr");
         let cantidad = parseFloat($(this).val()) || 0;
         let precioUnitario = parseFloat($fila.find(".precio_unitario").val()) || 0;
@@ -238,7 +227,7 @@ if (isset($_POST['registrar'])) {
     // Calcular total general
     function calcularTotalGeneral() {
         let total = 0;
-        $(".precio_total").each(function() {
+        $(".precio_total").each(function () {
             total += parseFloat($(this).val()) || 0;
         });
         $("#total").val(total);
