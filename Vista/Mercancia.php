@@ -1,0 +1,246 @@
+<?php
+// Archivo: /opt/lampp/htdocs/IngenieriaSoftware/Vista/Mercancia.php
+// Vista de mercancía con Bootstrap. Ajusta rutas/propiedades según tu proyecto.
+
+require_once __DIR__ . '/../Modelo/MercanciaDAO.php';
+require_once __DIR__ . '/../Controlador/MercanciaControlador.php';
+$controlador = new MercanciaControlador();
+
+
+// DEBUG temporal: mostrar errores en pantalla
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+$flash = $_SESSION['flash'] ?? null;
+if ($flash) {
+  // limpiar inmediatamente para que sea un mensaje "flash"
+  unset($_SESSION['flash']);
+}
+$dao = new MercanciaDAO();
+
+// Recuperar sólo las mercancías activas (oculta las deshabilitadas)
+// fallback seguro: si no existe el método 'obtenerMercanciasActivas' usar 'consultarTodos' u otros
+$mercancias = [];
+if (method_exists($dao, 'obtenerMercanciasActivas')) {
+  $mercancias = $dao->consultarTodos();
+} elseif (method_exists($dao, 'consultarTodos')) {
+  $mercancias = $dao->consultarTodos();
+} else {
+  foreach (['getAll', 'listar', 'findAll', 'consultar'] as $m) {
+    if (method_exists($dao, $m)) {
+      $mercancias = $dao->{$m}();
+      break;
+    }
+  }
+}
+
+// Función auxiliar para obtener propiedades desde array u object y distintos nombres/getters
+function val($item, $keys)
+{
+  foreach ((array)$keys as $k) {
+    // array access
+    if (is_array($item) && array_key_exists($k, $item)) return $item[$k];
+    // object public property
+    if (is_object($item) && isset($item->$k)) return $item->$k;
+    // getter method
+    $getter = 'get' . ucfirst($k);
+    if (is_object($item) && method_exists($item, $getter)) return $item->$getter();
+  }
+  return '';
+}
+
+function h($s)
+{
+  return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+}
+
+?>
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <title>Mercancía</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+  <div class="container py-4">
+    <?php if (!empty($flash)): ?>
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?php echo htmlspecialchars($flash, ENT_QUOTES, 'UTF-8'); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <?php endif; ?>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="h3">Listado de Mercancías</h1>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mercanciaModal" onclick="openCreate()">Añadir Mercancía</button>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th class="text-end">Precio</th>
+                <th class="text-end">Cantidad</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (!empty($mercancias)): ?>
+                <?php foreach ($mercancias as $m): ?>
+                  <?php
+                  $id = val($m, ['id', 'ID', 'codigo', 'getId']);
+                  $nombre = val($m, ['nombre', 'name', 'getNombre']);
+                  $descripcion = val($m, ['descripcion', 'descripcion', 'getDescripcion', 'desc']);
+                  $precio = val($m, ['precio', 'price', 'getPrecio']);
+                  $cantidad = val($m, ['cantidad', 'stock', 'getCantidad']);
+                  ?>
+                  <tr>
+                    <td><?php echo h($id); ?></td>
+                    <td><?php echo h($nombre); ?></td>
+                    <td><?php echo h($descripcion); ?></td>
+                    <td class="text-end"><?php echo h($precio); ?></td>
+                    <td class="text-end"><?php echo h($cantidad); ?></td>
+                    <td class="text-center">
+                      <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-secondary" onclick="openEdit(<?php echo json_encode([
+                                                                                      'id' => $id,
+                                                                                      'nombre' => $nombre,
+                                                                                      'descripcion' => $descripcion,
+                                                                                      'precio' => $precio,
+                                                                                      'cantidad' => $cantidad
+                                                                                    ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)" data-bs-toggle="modal" data-bs-target="#mercanciaModal">Editar</button>
+                        <form method="post" action="/IngenieriaSoftware/Controlador/MercanciaControlador.php" style="display:inline;">
+                          <input type="hidden" name="accion" value="delete">
+                          <input type="hidden" name="id" value="<?php echo h($id); ?>">
+                          <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Eliminar mercancía ID <?php echo h($id); ?>?')">Eliminar</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <tr>
+                  <td colspan="6" class="text-center py-4">No hay mercancías registradas.</td>
+                </tr>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="text-muted small mt-3">Ajusta los nombres de campos y rutas del controlador según tu implementación.</p>
+  </div>
+
+  <!-- Modal para crear -->
+  <div class="modal fade" id="mercanciaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <form id="mercanciaForm" method="POST" action="/IngenieriaSoftware/Controlador/MercanciaControlador.php" class="modal-content">
+
+        <!-- ESTA ES LA ACCIÓN REAL QUE YA TIENES -->
+        <input type="hidden" name="accion" id="formAction" value="registrar">
+        <input type="hidden" name="id" id="formId" value="">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitle">Nueva Mercancía</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" id="nombre" name="nombre" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Descripción</label>
+            <textarea id="descripcion" name="descripcion" class="form-control"></textarea>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label class="form-label">Precio</label>
+              <input type="number" id="precio" name="precio_unitario" class="form-control" required>
+            </div>
+            <div class="col">
+              <label class="form-label">Cantidad</label>
+              <input type="number" id="cantidad" name="cantidad" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col">
+              <label class="form-label">Stock mín.</label>
+              <input type="number" id="stock_minimo" name="stock_minimo" class="form-control" required>
+            </div>
+            <div class="col">
+              <label class="form-label">Stock máx.</label>
+              <input type="number" id="stock_maximo" name="stock_maximo" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label">Fecha ingreso</label>
+            <input type="date" id="fecha_ingreso" name="fecha_ingreso" class="form-control" value="<?php echo h(date('Y-m-d')); ?>">
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label">Fecha vencimiento</label>
+            <input type="date" id="fecha_vencimiento" name="fecha_vencimiento" class="form-control">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (popper incluido) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function openCreate() {
+      document.getElementById('modalTitle').textContent = 'Nueva Mercancía';
+      document.getElementById('formAction').value = 'registrar';
+      document.getElementById('formId').value = '';
+      document.getElementById('nombre').value = '';
+      document.getElementById('descripcion').value = '';
+      document.getElementById('precio').value = '';
+      document.getElementById('cantidad').value = '';
+      document.getElementById('stock_minimo').value = '';
+      document.getElementById('stock_maximo').value = '';
+      document.getElementById('fecha_ingreso').value = <?php echo json_encode(date('Y-m-d')); ?>;
+      document.getElementById('fecha_vencimiento').value = '';
+    }
+
+    function openEdit(data) {
+      // data es un objeto JSON pasado desde PHP
+      document.getElementById('modalTitle').textContent = 'Editar Mercancía';
+      document.getElementById('formAction').value = 'actualizar';
+      document.getElementById('formId').value = data.id ?? '';
+      document.getElementById('nombre').value = data.nombre ?? '';
+      document.getElementById('descripcion').value = data.descripcion ?? '';
+      document.getElementById('precio').value = data.precio ?? '';
+      document.getElementById('cantidad').value = data.cantidad ?? '';
+      document.getElementById('stock_minimo').value = data.stock_minimo ?? '';
+      document.getElementById('stock_maximo').value = data.stock_maximo ?? '';
+      document.getElementById('fecha_ingreso').value = data.fecha_ingreso ?? <?php echo json_encode(date('Y-m-d')); ?>;
+      document.getElementById('fecha_vencimiento').value = data.fecha_vencimiento ?? '';
+    }
+  </script>
+</body>
+
+</html>
