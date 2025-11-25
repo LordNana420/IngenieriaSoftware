@@ -9,34 +9,37 @@ $dao = new MercanciaDAO();
 // Intentar recuperar lista con nombres de método comunes
 $mercancias = [];
 foreach (['getAll', 'listar', 'findAll'] as $method) {
-    if (method_exists($dao, $method) && is_callable([$dao, $method])) {
-        // llamada dinámica para evitar errores de método undefined en análisis estático
-        $mercancias = $dao->{$method}();
-        break;
-    }
+  if (method_exists($dao, $method) && is_callable([$dao, $method])) {
+    // llamada dinámica para evitar errores de método undefined en análisis estático
+    $mercancias = $dao->{$method}();
+    break;
+  }
 }
 
 // Función auxiliar para obtener propiedades desde array u object y distintos nombres/getters
-function val($item, $keys) {
-    foreach ((array)$keys as $k) {
-        // array access
-        if (is_array($item) && array_key_exists($k, $item)) return $item[$k];
-        // object public property
-        if (is_object($item) && isset($item->$k)) return $item->$k;
-        // getter method
-        $getter = 'get' . ucfirst($k);
-        if (is_object($item) && method_exists($item, $getter)) return $item->$getter();
-    }
-    return '';
+function val($item, $keys)
+{
+  foreach ((array)$keys as $k) {
+    // array access
+    if (is_array($item) && array_key_exists($k, $item)) return $item[$k];
+    // object public property
+    if (is_object($item) && isset($item->$k)) return $item->$k;
+    // getter method
+    $getter = 'get' . ucfirst($k);
+    if (is_object($item) && method_exists($item, $getter)) return $item->$getter();
+  }
+  return '';
 }
 
-function h($s) {
-    return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+function h($s)
+{
+  return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
 }
 
 ?>
 <!doctype html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8">
   <title>Mercancía</title>
@@ -44,6 +47,7 @@ function h($s) {
   <!-- Bootstrap 5 CDN -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body class="bg-light">
   <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -69,11 +73,11 @@ function h($s) {
               <?php if (!empty($mercancias)): ?>
                 <?php foreach ($mercancias as $m): ?>
                   <?php
-                    $id = val($m, ['id', 'ID', 'codigo', 'getId']);
-                    $nombre = val($m, ['nombre', 'name', 'getNombre']);
-                    $descripcion = val($m, ['descripcion', 'descripcion', 'getDescripcion', 'desc']);
-                    $precio = val($m, ['precio', 'price', 'getPrecio']);
-                    $cantidad = val($m, ['cantidad', 'stock', 'getCantidad']);
+                  $id = val($m, ['id', 'ID', 'codigo', 'getId']);
+                  $nombre = val($m, ['nombre', 'name', 'getNombre']);
+                  $descripcion = val($m, ['descripcion', 'descripcion', 'getDescripcion', 'desc']);
+                  $precio = val($m, ['precio', 'price', 'getPrecio']);
+                  $cantidad = val($m, ['cantidad', 'stock', 'getCantidad']);
                   ?>
                   <tr>
                     <td><?php echo h($id); ?></td>
@@ -84,8 +88,12 @@ function h($s) {
                     <td class="text-center">
                       <div class="btn-group btn-group-sm" role="group">
                         <button class="btn btn-outline-secondary" onclick="openEdit(<?php echo json_encode([
-                          'id'=>$id,'nombre'=>$nombre,'descripcion'=>$descripcion,'precio'=>$precio,'cantidad'=>$cantidad
-                        ], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP); ?>)" data-bs-toggle="modal" data-bs-target="#mercanciaModal">Editar</button>
+                                                                                      'id' => $id,
+                                                                                      'nombre' => $nombre,
+                                                                                      'descripcion' => $descripcion,
+                                                                                      'precio' => $precio,
+                                                                                      'cantidad' => $cantidad
+                                                                                    ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)" data-bs-toggle="modal" data-bs-target="#mercanciaModal">Editar</button>
                         <form method="post" action="../Controlador/MercanciaControlador.php" style="display:inline;">
                           <input type="hidden" name="action" value="delete">
                           <input type="hidden" name="id" value="<?php echo h($id); ?>">
@@ -108,40 +116,73 @@ function h($s) {
     <p class="text-muted small mt-3">Ajusta los nombres de campos y rutas del controlador según tu implementación.</p>
   </div>
 
-  <!-- Modal para crear/editar -->
+  <!-- Modal para crear -->
   <div class="modal fade" id="mercanciaModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-      <form id="mercanciaForm" method="post" action="../Controlador/MercanciaControlador.php" class="modal-content">
-        <input type="hidden" name="action" id="formAction" value="save">
-        <input type="hidden" name="id" id="formId" value="">
+      <form id="mercanciaForm" method="POST" action="../Controlador/MercanciaControlador.php" class="modal-content">
+
+        <!-- ESTA ES LA ACCIÓN REAL QUE YA TIENES -->
+        <input type="hidden" name="accion" value="registrar">
+
         <div class="modal-header">
-          <h5 class="modal-title" id="modalTitle">Nueva Mercancía</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          <h5 class="modal-title">Nueva Mercancía</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
+
         <div class="modal-body">
           <div class="mb-3">
-            <label for="nombre" class="form-label">Nombre</label>
-            <input type="text" name="nombre" id="nombre" class="form-control" required>
+            <label class="form-label">Nombre</label>
+            <input type="text" name="nombre" class="form-control" required>
           </div>
+
           <div class="mb-3">
-            <label for="descripcion" class="form-label">Descripción</label>
-            <textarea name="descripcion" id="descripcion" class="form-control" rows="2"></textarea>
+            <label class="form-label">Descripción</label>
+            <textarea name="descripcion" class="form-control"></textarea>
           </div>
-          <div class="row g-2">
+
+          <div class="row">
             <div class="col">
-              <label for="precio" class="form-label">Precio</label>
-              <input type="number" step="0.01" name="precio" id="precio" class="form-control">
+              <label class="form-label">Precio</label>
+              <input type="number" name="precio_unitario" class="form-control" required>
             </div>
             <div class="col">
-              <label for="cantidad" class="form-label">Cantidad</label>
-              <input type="number" name="cantidad" id="cantidad" class="form-control">
+              <label class="form-label">Cantidad</label>
+              <input type="number" name="cantidad" class="form-control" required>
             </div>
           </div>
+
+          <div class="row mt-3">
+            <div class="col">
+              <label class="form-label">Stock mín.</label>
+              <input type="number" name="stock_minimo" class="form-control" required>
+            </div>
+            <div class="col">
+              <label class="form-label">Stock máx.</label>
+              <input type="number" name="stock_maximo" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label">Fecha ingreso</label>
+            <input type="date" name="fecha_ingreso" class="form-control" value="<?= date('Y-m-d') ?>">
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label">Fecha vencimiento</label>
+            <input type="date" name="fecha_vencimiento" class="form-control">
+          </div>
+
+          <div class="mt-3">
+            <label class="form-label">Responsable</label>
+            <input type="text" name="responsable" class="form-control" required>
+          </div>
+
         </div>
+
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" class="btn btn-primary">Guardar</button>
         </div>
+
       </form>
     </div>
   </div>
@@ -171,4 +212,5 @@ function h($s) {
     }
   </script>
 </body>
+
 </html>

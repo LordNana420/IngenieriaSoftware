@@ -31,6 +31,7 @@ $paginas_con_autenticacion = array(
     "Vista/Venta.php",   
     "Vista/NuevaVenta.php",
     "Vista/Mercancia.php",
+    "Vista/MercanciaRegistro.php",
 );
 
 ?>

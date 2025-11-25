@@ -77,32 +77,22 @@ class MercanciaDAO
         return $alertas;
     }
 
-    public function registrarInsumo(Mercancia $mercancia, $responsable)
+    public function registrarInsumo(Mercancia $m, $precio)
     {
-        // Capturar campos del objeto Mercancia
-        $nombre      = $mercancia->getNombre();
-        $cantidad    = $mercancia->getCantidad();
-        $stockMinimo = $mercancia->getStockMinimo();
-        $causa       = $mercancia->getCausa();
+        $this->conexion->abrir();
 
-        // Sentencia SQL
-        $sql = "
-            INSERT INTO mercancia (nombre, cantidad, stock_minimo, causa, responsable)
-            VALUES ('$nombre', $cantidad, $stockMinimo, '$causa', '$responsable')
-        ";
+        $sql = "INSERT INTO mercancia(nombre, cantidad, stock_minimo, causa, precio)
+            VALUES ('{$m->getNombre()}', '{$m->getCantidad()}', '{$m->getStockMinimo()}', '{$m->getCausa()}', '{$precio}')";
 
-        // Ejecutar consulta
         $this->conexion->ejecutar($sql);
 
-        // Verificar si se insertó
-        if ($this->conexion->getConexion()->affected_rows > 0) {
-            return true;
-        }
-
-        return false;
+        $this->conexion->cerrar();
     }
 
-   
+
+
+
+
 
     private function obtenerEstadoDeshabilitadoId()
     {
@@ -144,28 +134,25 @@ class MercanciaDAO
         return ($resultado && $resultado->num_rows > 0);
     }
 
-    public function deshabilitarMercancia($idMercancia, $motivo = "")
+    public function deshabilitarMercancia($id)
     {
+        $sql = "UPDATE mercancia SET Estado_Mercancia_idEstado_Mercancia = 2 WHERE idMercancia = ?";
 
-        // Validar si está activa
-        if (!$this->mercanciaEstaActiva($idMercancia)) {
-            return false;
+        $stmt = $this->conexion->getConexion()->prepare($sql);
+        if (!$stmt) {
+            die("Error en prepare: " . $this->conexion->getConexion()->error);
         }
 
-        // Obtener estado "Deshabilitado"
-        $estadoId = $this->obtenerEstadoDeshabilitadoId();
-        if ($estadoId === null) {
+        $stmt->bind_param("i", $id);
+
+        if ($stmt->execute()) {
+            return true;
+        } else {
             return false;
         }
-
-        $sql = "
-        UPDATE Mercancia
-        SET Estado_Mercancia_idEstado_Mercancia = $estadoId
-        WHERE idMercancia = $idMercancia
-    ";
-
-        return $this->conexion->getConexion()->query($sql);
     }
+
+
 
     private function mercanciaEstaDeshabilitada($idMercancia)
     {
