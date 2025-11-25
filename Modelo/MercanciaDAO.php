@@ -15,20 +15,31 @@ class MercanciaDAO
     // Consultar todos los productos
     public function consultarTodos()
     {
-        $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_Minimo 
+        $sql = "SELECT idMercancia, Nombre, Precio_Unitario, Cantidad_Mercancia, Stock_Minimo, Stock_Maximo, Fecha_Ingreso, Fecha_vencimiento, Estado_Mercancia_idEstado_Mercancia, Tipo_idEstado_Tipo, Inventario_idInventario
                 FROM `mercancia`
-                 ORDER BY Nombre ASC";
+                ORDER BY Nombre ASC";
+
         $resultado = $this->conexion->getConexion()->query($sql);
 
         $mercancias = [];
         if ($resultado && $resultado->num_rows > 0) {
             while ($fila = $resultado->fetch_assoc()) {
-                $mercancias[] = new Mercancia(
-                    $fila['idMercancia'],
-                    $fila['Nombre'],
-                    $fila['Cantidad_Mercancia'],
-                    $fila['Stock_Minimo']
-                );
+                // mapear columnas de la BD a claves que espera la vista
+                $mercancias[] = [
+                    'id' => $fila['idMercancia'],
+                    'nombre' => $fila['Nombre'],
+                    // No hay columna Descripcion en la tabla; dejar vacío
+                    'descripcion' => '',
+                    'precio' => $fila['Precio_Unitario'] ?? 0,
+                    'cantidad' => $fila['Cantidad_Mercancia'] ?? 0,
+                    'stock_minimo' => $fila['Stock_Minimo'] ?? 0,
+                    'stock_maximo' => $fila['Stock_Maximo'] ?? 0,
+                    'fecha_ingreso' => $fila['Fecha_Ingreso'] ?? null,
+                    'fecha_vencimiento' => $fila['Fecha_vencimiento'] ?? null,
+                    'estado_id' => $fila['Estado_Mercancia_idEstado_Mercancia'] ?? null,
+                    'tipo_id' => $fila['Tipo_idEstado_Tipo'] ?? null,
+                    'inventario_id' => $fila['Inventario_idInventario'] ?? null
+                ];
             }
         }
         return $mercancias;
@@ -89,17 +100,19 @@ class MercanciaDAO
             if ($res && $row = $res->fetch_assoc()) {
                 $inventario_id = (int)$row['idInventario'];
             } else {
-                // Intentar crear un inventario placeholder automáticamente
-                $created = $conn->query("INSERT INTO inventario () VALUES ()");
+                // Crear un inventario placeholder con valores por defecto (ajusta si la tabla requiere otros campos)
+                // calcular un id explícito porque idInventario no es AUTO_INCREMENT
+                $resMax = $conn->query("SELECT MAX(idInventario) AS mx FROM inventario");
+                $mx = 0;
+                if ($resMax && $rowMax = $resMax->fetch_assoc()) {
+                    $mx = (int)$rowMax['mx'];
+                }
+                $newId = $mx + 1;
+                $created = $conn->query("INSERT INTO inventario (idInventario, Cantidad_Total, precio_unitario) VALUES ($newId, 0, 0)");
                 if ($created) {
-                    $inventario_id = (int)$conn->insert_id;
+                    $inventario_id = $newId;
                 } else {
-                    // No se pudo crear: dar error claro para que el desarrollador lo solucione
-                    throw new Exception(
-                        "No existe registro en tabla 'inventario' y no se pudo crear uno automáticamente. " .
-                        "Por favor cree manualmente un inventario o pegue aquí la salida de: DESCRIBE inventario; " .
-                        "Error SQL: " . $conn->error
-                    );
+                    throw new Exception("No se pudo crear inventario placeholder. Error SQL: " . $conn->error);
                 }
             }
         } else {
@@ -109,12 +122,27 @@ class MercanciaDAO
             $stmtChk->execute();
             $resChk = $stmtChk->get_result();
             if (!$resChk || $resChk->num_rows === 0) {
-                // intentar recuperar cualquier id existente
+                // Si el id no existe, intentar recuperar cualquier id existente
                 $res = $conn->query("SELECT idInventario FROM inventario LIMIT 1");
                 if ($res && $row = $res->fetch_assoc()) {
                     $inventario_id = (int)$row['idInventario'];
                 } else {
-                    throw new Exception("Inventario_idInventario proporcionado no existe y no hay inventarios en la BD.");
+                    // Si no hay inventarios, crear uno placeholder con id explícito
+                    // calcular MAX(idInventario)+1 porque idInventario no es AUTO_INCREMENT
+                    $resMax2 = $conn->query("SELECT MAX(idInventario) AS mx FROM inventario");
+                    $mx2 = 0;
+                    if ($resMax2 && $rowMax2 = $resMax2->fetch_assoc()) {
+                        $mx2 = (int)$rowMax2['mx'];
+                    }
+                    $newId2 = $mx2 + 1;
+                    $created = $conn->query("INSERT INTO inventario (idInventario, Cantidad_Total, precio_unitario) VALUES ($newId2, 0, 0)");
+                    if ($created) {
+                        $inventario_id = $newId2;
+                    } else {
+                        // No se pudo crear: devolver error claro con SQL error
+                        $stmtChk->close();
+                        throw new Exception("No existe inventario y no se pudo crear uno automático. Error SQL: " . $conn->error);
+                    }
                 }
             }
             $stmtChk->close();
@@ -194,7 +222,7 @@ class MercanciaDAO
         return null;
     }
 
-    private function mercanciaEstaActiva($idMercancia)
+    public function mercanciaEstaActiva($idMercancia)
     {
         $sql = "
         SELECT m.idMercancia
@@ -213,20 +241,26 @@ class MercanciaDAO
 
     public function deshabilitarMercancia($id)
     {
-        $sql = "UPDATE mercancia SET Estado_Mercancia_idEstado_Mercancia = 2 WHERE idMercancia = ?";
+        $id = (int)$id;
+        if ($id <= 0) return false;
 
-        $stmt = $this->conexion->getConexion()->prepare($sql);
-        if (!$stmt) {
-            die("Error en prepare: " . $this->conexion->getConexion()->error);
-        }
-
-        $stmt->bind_param("i", $id);
-
-        if ($stmt->execute()) {
-            return true;
-        } else {
+        // obtener id del estado "Deshabilitado"
+        $idEstado = $this->obtenerEstadoDeshabilitadoId();
+        if (empty($idEstado)) {
+            // si no existe el estado, no se puede deshabilitar
             return false;
         }
+
+        $sql = "UPDATE `mercancia` SET Estado_Mercancia_idEstado_Mercancia = ? WHERE idMercancia = ?";
+        $stmt = $this->conexion->getConexion()->prepare($sql);
+        if (!$stmt) {
+            // para debugging temporal lanzar excepción
+            throw new Exception("Error en prepare (deshabilitar): " . $this->conexion->getConexion()->error);
+        }
+        $stmt->bind_param("ii", $idEstado, $id);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return (bool)$ok;
     }
 
 
@@ -281,7 +315,7 @@ class MercanciaDAO
         $sql = "
         SELECT m.*, em.Valor AS Estado
         FROM `mercancia` m
-        INNER JOIN Estado_Mercancia em 
+        INNER JOIN `estado_mercancia` em 
             ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
         WHERE em.Valor != 'Deshabilitado'
         ORDER BY m.Nombre ASC
@@ -296,12 +330,15 @@ class MercanciaDAO
         return $lista;
     }
 
+
+
+
     public function obtenerMercanciasDeshabilitadas()
     {
         $sql = "
         SELECT m.*, em.Valor AS Estado
         FROM `mercancia` m
-        INNER JOIN Estado_Mercancia em 
+        INNER JOIN `estado_mercancia` em 
             ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
         WHERE em.Valor = 'Deshabilitado'
         ORDER BY m.Nombre ASC
@@ -316,16 +353,135 @@ class MercanciaDAO
         return $lista;
     }
 
+
+
     public function obtenerDetallesMercancia($id)
     {
-        $id = $this->conexion->getConexion()->real_escape_string($id);
+        $id = (int)$id;
 
-        $sql = "SELECT * FROM `mercancia` WHERE idMercancia = $id LIMIT 1";
+        $sql = "SELECT * FROM mercancia WHERE idMercancia = $id LIMIT 1";
         $this->conexion->ejecutar($sql);
 
         return $this->conexion->registro();
     }
 
+
+
+    // Actualizar insumo (update)
+    public function actualizarInsumo(Mercancia $m, $precio)
+    {
+        $this->conexion->abrir();
+        $conn = $this->conexion->getConexion();
+
+        // obtener id de mercancia de forma segura (soporta objeto Mercancia o array)
+        $id = null;
+        if (is_object($m)) {
+            if (method_exists($m, 'getIdMercancia')) {
+                $id = $m->getId();
+            } elseif (method_exists($m, 'getId')) {
+                $id = $m->getId();
+            } else {
+                // intento final: castear a array para leer propiedades públicas (stdClass u objetos dinámicos)
+                $arr = (array)$m;
+                $id = $arr['id'] ?? $arr['idMercancia'] ?? null;
+            }
+        } elseif (is_array($m)) {
+            $id = $m['id'] ?? $m['idMercancia'] ?? null;
+        }
+        $id = (int)$id;
+        if ($id <= 0) {
+            throw new Exception("ID de mercancia inválido para actualizar.");
+        }
+
+        $sql = "UPDATE `mercancia` SET
+                    Nombre = ?,
+                    Cantidad_Mercancia = ?,
+                    Stock_Minimo = ?,
+                    Stock_Maximo = ?,
+                    Fecha_Ingreso = ?,
+                    Fecha_vencimiento = ?,
+                    Precio_Unitario = ?,
+                    Estado_Mercancia_idEstado_Mercancia = ?,
+                    Tipo_idEstado_Tipo = ?,
+                    Inventario_idInventario = ?
+                WHERE idMercancia = ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error en prepare (update): " . $conn->error);
+        }
+
+        // obtener valores desde el objeto Mercancia (usar getters si existen, o array keys)
+        // helper inline para obtener valor seguro sin acceder a propiedades privadas
+        $get = function ($objOrArr, $methodsOrKeys, $default = null) {
+            // intentar métodos en objeto
+            if (is_object($objOrArr)) {
+                foreach ((array)$methodsOrKeys as $mth) {
+                    if (method_exists($objOrArr, $mth)) return $objOrArr->{$mth}();
+                }
+            }
+            // intentar claves en array
+            if (is_array($objOrArr)) {
+                foreach ((array)$methodsOrKeys as $k) {
+                    if (array_key_exists($k, $objOrArr)) return $objOrArr[$k];
+                }
+            }
+            return $default;
+        };
+
+        $nombre = (string)$get($m, ['getNombre', 'nombre', 'Nombre'], '');
+        $cantidad = (int)$get($m, ['getCantidad', 'cantidad', 'Cantidad_Mercancia'], 0);
+        $stock_minimo = (int)$get($m, ['getStockMinimo', 'stock_minimo', 'Stock_Minimo'], 0);
+        $stock_maximo = (int)$get($m, ['getStockMaximo', 'stock_maximo', 'Stock_Maximo'], 0);
+        $fecha_ingreso = $get($m, ['getFechaIngreso', 'fecha_ingreso', 'Fecha_Ingreso'], date('Y-m-d'));
+        $fecha_vencimiento = $get($m, ['getFechaVencimiento', 'fecha_vencimiento', 'Fecha_vencimiento'], null);
+        $estado_id = (int)$get($m, ['getEstadoId', 'estado_id', 'Estado_Mercancia_idEstado_Mercancia'], 1);
+        $tipo_id = (int)$get($m, ['getTipoId', 'tipo_id', 'Tipo_idEstado_Tipo'], 1);
+        $inventario_id = (int)$get($m, ['getInventarioId', 'inventario_id', 'Inventario_idInventario'], 1);
+
+        // tipos: s i i i s s d i i i i (ultimo i = id)
+        $stmt->bind_param(
+            "siiissdiiii",
+            $nombre,
+            $cantidad,
+            $stock_minimo,
+            $stock_maximo,
+            $fecha_ingreso,
+            $fecha_vencimiento,
+            $precio,
+            $estado_id,
+            $tipo_id,
+            $inventario_id,
+            $id
+        );
+
+        if (!$stmt->execute()) {
+            $err = $stmt->error;
+            $stmt->close();
+            $this->conexion->cerrar();
+            throw new Exception("Error al actualizar mercancia: " . $err);
+        }
+
+        $stmt->close();
+        $this->conexion->cerrar();
+        return true;
+    }
+
+    // Eliminar mercancia por id
+    public function eliminarMercancia($id)
+    {
+        $id = (int)$id;
+        if ($id <= 0) return false;
+        $sql = "DELETE FROM `mercancia` WHERE idMercancia = ?";
+        $stmt = $this->conexion->getConexion()->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error en prepare (delete): " . $this->conexion->getConexion()->error);
+        }
+        $stmt->bind_param("i", $id);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
 
     public function cerrarConexion()
     {
