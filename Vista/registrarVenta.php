@@ -1,6 +1,7 @@
 <?php
-require_once("Controlador/VentaControlador.php");
-require_once("Controlador/ProductoControlador.php");
+require_once __DIR__ . "/../Controlador/VentaControlador.php";
+require_once __DIR__ . "/../Controlador/ProductoControlador.php";
+
 
 // Controladores
 $controlProducto = new ProductoControlador();
@@ -47,6 +48,7 @@ if (isset($_POST['registrar'])) {
         $mensaje = "Debe seleccionar al menos un producto y un cliente válido.";
         $exito = false;
     }
+    
 }
 ?>
 
