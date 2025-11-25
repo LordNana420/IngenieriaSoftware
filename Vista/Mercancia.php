@@ -172,12 +172,6 @@ function h($s)
             <label class="form-label">Fecha vencimiento</label>
             <input type="date" id="fecha_vencimiento" name="fecha_vencimiento" class="form-control">
           </div>
-
-          <div class="mt-3">
-            <label class="form-label">Responsable</label>
-            <input type="text" id="responsable" name="responsable" class="form-control" required>
-          </div>
-
         </div>
 
         <div class="modal-footer">
@@ -189,6 +183,7 @@ function h($s)
   </div>
 
   <!-- Bootstrap JS (popper incluido) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function openCreate() {
       document.getElementById('modalTitle').textContent = 'Nueva Mercancía';
@@ -202,7 +197,6 @@ function h($s)
       document.getElementById('stock_maximo').value = '';
       document.getElementById('fecha_ingreso').value = <?php echo json_encode(date('Y-m-d')); ?>;
       document.getElementById('fecha_vencimiento').value = '';
-      document.getElementById('responsable').value = '';
     }
 
     function openEdit(data) {
@@ -218,9 +212,7 @@ function h($s)
       document.getElementById('stock_maximo').value = data.stock_maximo ?? '';
       document.getElementById('fecha_ingreso').value = data.fecha_ingreso ?? <?php echo json_encode(date('Y-m-d')); ?>;
       document.getElementById('fecha_vencimiento').value = data.fecha_vencimiento ?? '';
-      document.getElementById('responsable').value = data.responsable ?? '';
     }
-  </script>
   </script>
 </body>
 

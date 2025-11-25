@@ -1,6 +1,6 @@
 <?php
-require_once("Conexion.php");
-require_once("Mercancia.php");
+require_once __DIR__ . '/Conexion.php';
+require_once __DIR__ . '/Mercancia.php';
 
 class MercanciaDAO
 {
@@ -16,8 +16,8 @@ class MercanciaDAO
     public function consultarTodos()
     {
         $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_Minimo 
-                FROM Mercancia 
-                ORDER BY Nombre ASC";
+                FROM `mercancia`
+                 ORDER BY Nombre ASC";
         $resultado = $this->conexion->getConexion()->query($sql);
 
         $mercancias = [];
@@ -38,9 +38,9 @@ class MercanciaDAO
     public function consultarStock()
     {
         $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_Minimo 
-                FROM Mercancia 
-                WHERE Cantidad_Mercancia <= Stock_Minimo
-                ORDER BY Cantidad_Mercancia ASC";
+                FROM `mercancia`
+                 WHERE Cantidad_Mercancia <= Stock_Minimo
+                 ORDER BY Cantidad_Mercancia ASC";
         $resultado = $this->conexion->getConexion()->query($sql);
 
         $alertas = [];
@@ -58,9 +58,9 @@ class MercanciaDAO
             }
         }
         $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_maximo
-                FROM Mercancia 
-                WHERE Cantidad_Mercancia > stock_maximo
-                ORDER BY Cantidad_Mercancia ASC";
+                FROM `mercancia`
+                 WHERE Cantidad_Mercancia > stock_maximo
+                 ORDER BY Cantidad_Mercancia ASC";
         $resultado = $this->conexion->getConexion()->query($sql);
         if ($resultado && $resultado->num_rows > 0) {
             while ($fila = $resultado->fetch_assoc()) {
@@ -80,13 +80,93 @@ class MercanciaDAO
     public function registrarInsumo(Mercancia $m, $precio)
     {
         $this->conexion->abrir();
+        $conn = $this->conexion->getConexion();
 
-        $sql = "INSERT INTO mercancia(nombre, cantidad, stock_minimo, causa, precio)
-            VALUES ('{$m->getNombre()}', '{$m->getCantidad()}', '{$m->getStockMinimo()}', '{$m->getCausa()}', '{$precio}')";
+        // validar/normalizar inventario FK: usar el id pasado o intentar obtener uno existente
+        $inventario_id = (int)($m->getInventarioId() ?? 0);
+        if ($inventario_id <= 0) {
+            $res = $conn->query("SELECT idInventario FROM inventario LIMIT 1");
+            if ($res && $row = $res->fetch_assoc()) {
+                $inventario_id = (int)$row['idInventario'];
+            } else {
+                // Intentar crear un inventario placeholder automáticamente
+                $created = $conn->query("INSERT INTO inventario () VALUES ()");
+                if ($created) {
+                    $inventario_id = (int)$conn->insert_id;
+                } else {
+                    // No se pudo crear: dar error claro para que el desarrollador lo solucione
+                    throw new Exception(
+                        "No existe registro en tabla 'inventario' y no se pudo crear uno automáticamente. " .
+                        "Por favor cree manualmente un inventario o pegue aquí la salida de: DESCRIBE inventario; " .
+                        "Error SQL: " . $conn->error
+                    );
+                }
+            }
+        } else {
+            // comprobar que el id proporcionado existe
+            $stmtChk = $conn->prepare("SELECT 1 FROM inventario WHERE idInventario = ? LIMIT 1");
+            $stmtChk->bind_param("i", $inventario_id);
+            $stmtChk->execute();
+            $resChk = $stmtChk->get_result();
+            if (!$resChk || $resChk->num_rows === 0) {
+                // intentar recuperar cualquier id existente
+                $res = $conn->query("SELECT idInventario FROM inventario LIMIT 1");
+                if ($res && $row = $res->fetch_assoc()) {
+                    $inventario_id = (int)$row['idInventario'];
+                } else {
+                    throw new Exception("Inventario_idInventario proporcionado no existe y no hay inventarios en la BD.");
+                }
+            }
+            $stmtChk->close();
+        }
 
-        $this->conexion->ejecutar($sql);
+        // Ajustado a la estructura de tabla provista
+        $sql = "INSERT INTO `mercancia`
+             (Nombre, Cantidad_Mercancia, Stock_Minimo, Stock_Maximo, Fecha_Ingreso, Fecha_vencimiento, Precio_Unitario, Estado_Mercancia_idEstado_Mercancia, Tipo_idEstado_Tipo, Inventario_idInventario)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error en prepare: " . $conn->error);
+        }
+
+        // Obtener valores desde el objeto Mercancia
+        $nombre = $m->getNombre();
+        $cantidad = (int)$m->getCantidad();
+        $stock_minimo = (int)$m->getStockMinimo();
+        $stock_maximo = (int)($m->getStockMaximo() ?? 0);
+        $fecha_ingreso = $m->getFechaIngreso() ?? date('Y-m-d');
+        $fecha_vencimiento = $m->getFechaVencimiento() ?? null;
+        $estado_id = (int)($m->getEstadoId() ?? 1);
+        $tipo_id = (int)($m->getTipoId() ?? 1);
+
+        // types: s i i i s s d i i i
+        $stmt->bind_param(
+            "siiissdiii",
+            $nombre,
+            $cantidad,
+            $stock_minimo,
+            $stock_maximo,
+            $fecha_ingreso,
+            $fecha_vencimiento,
+            $precio,
+            $estado_id,
+            $tipo_id,
+            $inventario_id
+        );
+
+        if (!$stmt->execute()) {
+            // registrar error y lanzar con mensaje claro
+            $err = $stmt->error;
+            $stmt->close();
+            $this->conexion->cerrar();
+            throw new Exception("Error al insertar mercancia: " . $err);
+        }
+
+        $stmt->close();
         $this->conexion->cerrar();
+
+        return true;
     }
 
 
@@ -118,7 +198,7 @@ class MercanciaDAO
     {
         $sql = "
         SELECT m.idMercancia
-        FROM Mercancia m
+        FROM `mercancia` m
         INNER JOIN Estado_Mercancia em 
             ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
         WHERE m.idMercancia = $idMercancia
@@ -155,7 +235,7 @@ class MercanciaDAO
     {
         $sql = "
         SELECT m.idMercancia
-        FROM Mercancia m
+        FROM `mercancia` m
         INNER JOIN Estado_Mercancia em 
             ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
         WHERE m.idMercancia = $idMercancia
@@ -188,10 +268,10 @@ class MercanciaDAO
 
         // Actualizar
         $sqlUpdate = "
-        UPDATE Mercancia
-        SET Estado_Mercancia_idEstado_Mercancia = $idEstadoDisponible
-        WHERE idMercancia = $idMercancia
-    ";
+        UPDATE `mercancia`
+         SET Estado_Mercancia_idEstado_Mercancia = $idEstadoDisponible
+         WHERE idMercancia = $idMercancia
+     ";
 
         return $this->conexion->getConexion()->query($sqlUpdate);
     }
@@ -200,7 +280,7 @@ class MercanciaDAO
     {
         $sql = "
         SELECT m.*, em.Valor AS Estado
-        FROM Mercancia m
+        FROM `mercancia` m
         INNER JOIN Estado_Mercancia em 
             ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
         WHERE em.Valor != 'Deshabilitado'
@@ -220,7 +300,7 @@ class MercanciaDAO
     {
         $sql = "
         SELECT m.*, em.Valor AS Estado
-        FROM Mercancia m
+        FROM `mercancia` m
         INNER JOIN Estado_Mercancia em 
             ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
         WHERE em.Valor = 'Deshabilitado'
@@ -240,7 +320,7 @@ class MercanciaDAO
     {
         $id = $this->conexion->getConexion()->real_escape_string($id);
 
-        $sql = "SELECT * FROM mercancia WHERE idMercancia = $id LIMIT 1";
+        $sql = "SELECT * FROM `mercancia` WHERE idMercancia = $id LIMIT 1";
         $this->conexion->ejecutar($sql);
 
         return $this->conexion->registro();

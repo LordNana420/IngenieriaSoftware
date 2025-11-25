@@ -1,4 +1,9 @@
 <?php
+// DEBUG temporal: mostrar errores en pantalla
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once __DIR__ . "/../Modelo/MercanciaDAO.php";
 require_once __DIR__ . "/../Modelo/Mercancia.php";
 
@@ -33,8 +38,6 @@ class MercanciaControlador
      */
     public function registrarInsumo($data)
     {
-        $responsable = $data['responsable'] ?? 'Desconocido';
-
         $mercancia = new Mercancia(
             null, // ID nulo para auto_increment
             $data['nombre'] ?? '',
@@ -50,7 +53,9 @@ class MercanciaControlador
             $data['inventario_id'] ?? 1
         );
 
-        return $this->dao->registrarInsumo($mercancia, $responsable);
+        // pasar el precio correcto a la DAO (y mantener responsable separado)
+        $precio = $data['precio_unitario'] ?? ($data['precio'] ?? 0);
+        return $this->dao->registrarInsumo($mercancia, $precio);
     }
 
     public function deshabilitarInsumo($idMercancia)
@@ -69,7 +74,7 @@ class MercanciaControlador
             if ($accion === 'registrar') {
                 $this->registrarInsumo($_POST);
                 // Redirigir para evitar resubmission
-                header("Location: ../Vista/MercanciaRegistro.php");
+                header("Location: ../Vista/Mercancia.php");
                 exit();
             }
         }
@@ -86,4 +91,3 @@ class MercanciaControlador
 
 // Instanciar controlador para procesar POST automáticamente
 $controlador = new MercanciaControlador();
-?>
