@@ -119,62 +119,63 @@ function h($s)
   <!-- Modal para crear -->
   <div class="modal fade" id="mercanciaModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-      <form id="mercanciaForm" method="POST" action="../Controlador/MercanciaControlador.php" class="modal-content">
+      <form id="mercanciaForm" method="POST" action="/IngenieriaSoftware/Controlador/MercanciaControlador.php" class="modal-content">
 
         <!-- ESTA ES LA ACCIÓN REAL QUE YA TIENES -->
-        <input type="hidden" name="accion" value="registrar">
+        <input type="hidden" name="accion" id="formAction" value="registrar">
+        <input type="hidden" name="id" id="formId" value="">
 
         <div class="modal-header">
-          <h5 class="modal-title">Nueva Mercancía</h5>
+          <h5 class="modal-title" id="modalTitle">Nueva Mercancía</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label">Nombre</label>
-            <input type="text" name="nombre" class="form-control" required>
+            <input type="text" id="nombre" name="nombre" class="form-control" required>
           </div>
 
           <div class="mb-3">
             <label class="form-label">Descripción</label>
-            <textarea name="descripcion" class="form-control"></textarea>
+            <textarea id="descripcion" name="descripcion" class="form-control"></textarea>
           </div>
 
           <div class="row">
             <div class="col">
               <label class="form-label">Precio</label>
-              <input type="number" name="precio_unitario" class="form-control" required>
+              <input type="number" id="precio" name="precio_unitario" class="form-control" required>
             </div>
             <div class="col">
               <label class="form-label">Cantidad</label>
-              <input type="number" name="cantidad" class="form-control" required>
+              <input type="number" id="cantidad" name="cantidad" class="form-control" required>
             </div>
           </div>
 
           <div class="row mt-3">
             <div class="col">
               <label class="form-label">Stock mín.</label>
-              <input type="number" name="stock_minimo" class="form-control" required>
+              <input type="number" id="stock_minimo" name="stock_minimo" class="form-control" required>
             </div>
             <div class="col">
               <label class="form-label">Stock máx.</label>
-              <input type="number" name="stock_maximo" class="form-control" required>
+              <input type="number" id="stock_maximo" name="stock_maximo" class="form-control" required>
             </div>
           </div>
 
           <div class="mt-3">
             <label class="form-label">Fecha ingreso</label>
-            <input type="date" name="fecha_ingreso" class="form-control" value="<?= date('Y-m-d') ?>">
+            <input type="date" id="fecha_ingreso" name="fecha_ingreso" class="form-control" value="<?php echo h(date('Y-m-d')); ?>">
           </div>
 
           <div class="mt-3">
             <label class="form-label">Fecha vencimiento</label>
-            <input type="date" name="fecha_vencimiento" class="form-control">
+            <input type="date" id="fecha_vencimiento" name="fecha_vencimiento" class="form-control">
           </div>
 
           <div class="mt-3">
             <label class="form-label">Responsable</label>
-            <input type="text" name="responsable" class="form-control" required>
+            <input type="text" id="responsable" name="responsable" class="form-control" required>
           </div>
 
         </div>
@@ -188,28 +189,38 @@ function h($s)
   </div>
 
   <!-- Bootstrap JS (popper incluido) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function openCreate() {
       document.getElementById('modalTitle').textContent = 'Nueva Mercancía';
-      document.getElementById('formAction').value = 'save';
+      document.getElementById('formAction').value = 'registrar';
       document.getElementById('formId').value = '';
       document.getElementById('nombre').value = '';
       document.getElementById('descripcion').value = '';
       document.getElementById('precio').value = '';
       document.getElementById('cantidad').value = '';
+      document.getElementById('stock_minimo').value = '';
+      document.getElementById('stock_maximo').value = '';
+      document.getElementById('fecha_ingreso').value = <?php echo json_encode(date('Y-m-d')); ?>;
+      document.getElementById('fecha_vencimiento').value = '';
+      document.getElementById('responsable').value = '';
     }
 
     function openEdit(data) {
       // data es un objeto JSON pasado desde PHP
       document.getElementById('modalTitle').textContent = 'Editar Mercancía';
-      document.getElementById('formAction').value = 'update';
+      document.getElementById('formAction').value = 'actualizar';
       document.getElementById('formId').value = data.id ?? '';
       document.getElementById('nombre').value = data.nombre ?? '';
       document.getElementById('descripcion').value = data.descripcion ?? '';
       document.getElementById('precio').value = data.precio ?? '';
       document.getElementById('cantidad').value = data.cantidad ?? '';
+      document.getElementById('stock_minimo').value = data.stock_minimo ?? '';
+      document.getElementById('stock_maximo').value = data.stock_maximo ?? '';
+      document.getElementById('fecha_ingreso').value = data.fecha_ingreso ?? <?php echo json_encode(date('Y-m-d')); ?>;
+      document.getElementById('fecha_vencimiento').value = data.fecha_vencimiento ?? '';
+      document.getElementById('responsable').value = data.responsable ?? '';
     }
+  </script>
   </script>
 </body>
 

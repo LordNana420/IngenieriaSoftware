@@ -91,9 +91,6 @@ class MercanciaDAO
 
 
 
-
-
-
     private function obtenerEstadoDeshabilitadoId()
     {
         $sql = "SELECT idEstado_Mercancia 
