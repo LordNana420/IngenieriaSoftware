@@ -1,6 +1,7 @@
 <?php
 require_once("Conexion.php");
 require_once("Mercancia.php");
+require_once("Movimiento.php");
 
 class MercanciaDAO
 {
@@ -15,7 +16,7 @@ class MercanciaDAO
     // Consultar todos los productos
     public function consultarTodos()
     {
-        $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_Minimo 
+        $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_Minimo, Stock_Maximo, Precio_Unitario, Fecha_Ingreso, Fecha_vencimiento 
                 FROM Mercancia 
                 ORDER BY Nombre ASC";
         $resultado = $this->conexion->getConexion()->query($sql);
@@ -27,23 +28,29 @@ class MercanciaDAO
                     $fila['idMercancia'],
                     $fila['Nombre'],
                     $fila['Cantidad_Mercancia'],
-                    $fila['Stock_Minimo']
+                    $fila['Stock_Minimo'],
+                    $fila['Stock_Maximo'],
+                    '', // causa
+                    $fila['Fecha_Ingreso'],
+                    $fila['Fecha_vencimiento'],
+                    $fila['Precio_Unitario']
                 );
             }
         }
         return $mercancias;
     }
 
-    // Consultar insumos con stock bajo
+    // Consultar insumos con stock bajo o alto
     public function consultarStock()
     {
+        $alertas = [];
+
+        // Stock bajo
         $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_Minimo 
                 FROM Mercancia 
                 WHERE Cantidad_Mercancia <= Stock_Minimo
                 ORDER BY Cantidad_Mercancia ASC";
         $resultado = $this->conexion->getConexion()->query($sql);
-
-        $alertas = [];
         if ($resultado && $resultado->num_rows > 0) {
             while ($fila = $resultado->fetch_assoc()) {
                 $alertas[] = new Mercancia(
@@ -53,13 +60,15 @@ class MercanciaDAO
                     $fila['Stock_Minimo'],
                     'Stock muy bajo'
 
-                    
+
                 );
             }
         }
-        $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_maximo
+
+        // Stock alto
+        $sql = "SELECT idMercancia, Nombre, Cantidad_Mercancia, Stock_Maximo
                 FROM Mercancia 
-                WHERE Cantidad_Mercancia > stock_maximo
+                WHERE Cantidad_Mercancia > Stock_Maximo
                 ORDER BY Cantidad_Mercancia ASC";
         $resultado = $this->conexion->getConexion()->query($sql);
         if ($resultado && $resultado->num_rows > 0) {
@@ -68,14 +77,191 @@ class MercanciaDAO
                     $fila['idMercancia'],
                     $fila['Nombre'],
                     $fila['Cantidad_Mercancia'],
-                    $fila['Stock_maximo'],
-                    'Stock limite superado'
+                    $fila['Stock_Maximo'],
+                    'Stock límite superado'
                 );
             }
         }
 
         return $alertas;
     }
+
+    private function obtenerEstadoDeshabilitadoId()
+    {
+        $sql = "SELECT idEstado_Mercancia 
+            FROM Estado_Mercancia 
+            WHERE Valor = 'Deshabilitado' 
+            LIMIT 1";
+
+        $resultado = $this->conexion->getConexion()->query($sql);
+
+        if ($resultado && $resultado->num_rows > 0) {
+            $fila = $resultado->fetch_assoc();
+            return $fila['idEstado_Mercancia'];
+        }
+
+        // Si no existe, lo crea
+        $sqlInsert = "INSERT INTO Estado_Mercancia (Valor) VALUES ('Deshabilitado')";
+        if ($this->conexion->getConexion()->query($sqlInsert)) {
+            return $this->conexion->getConexion()->insert_id;
+        }
+
+        return null;
+    }
+
+    private function mercanciaEstaActiva($idMercancia)
+    {
+        $sql = "
+        SELECT m.idMercancia
+        FROM Mercancia m
+        INNER JOIN Estado_Mercancia em 
+            ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
+        WHERE m.idMercancia = $idMercancia
+          AND em.Valor != 'Deshabilitado'
+        LIMIT 1
+    ";
+
+        $resultado = $this->conexion->getConexion()->query($sql);
+
+        return ($resultado && $resultado->num_rows > 0);
+    }
+
+    public function deshabilitarMercancia($idMercancia, $motivo = "")
+    {
+
+        // Validar si está activa
+        if (!$this->mercanciaEstaActiva($idMercancia)) {
+            return false;
+        }
+
+        // Obtener estado "Deshabilitado"
+        $estadoId = $this->obtenerEstadoDeshabilitadoId();
+        if ($estadoId === null) {
+            return false;
+        }
+
+        $sql = "
+        UPDATE Mercancia
+        SET Estado_Mercancia_idEstado_Mercancia = $estadoId
+        WHERE idMercancia = $idMercancia
+    ";
+
+        return $this->conexion->getConexion()->query($sql);
+    }
+
+    private function mercanciaEstaDeshabilitada($idMercancia)
+    {
+        $sql = "
+        SELECT m.idMercancia
+        FROM Mercancia m
+        INNER JOIN Estado_Mercancia em 
+            ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
+        WHERE m.idMercancia = $idMercancia
+          AND em.Valor = 'Deshabilitado'
+        LIMIT 1
+    ";
+
+        $resultado = $this->conexion->getConexion()->query($sql);
+
+        return ($resultado && $resultado->num_rows > 0);
+    }
+
+    public function habilitarMercancia($idMercancia)
+    {
+
+        if (!$this->mercanciaEstaDeshabilitada($idMercancia)) {
+            return false;
+        }
+
+        // Obtener estado "Disponible"
+        $sql = "
+        SELECT idEstado_Mercancia 
+        FROM Estado_Mercancia 
+        WHERE Valor = 'Disponible' 
+        LIMIT 1
+    ";
+        $resultado = $this->conexion->getConexion()->query($sql);
+        $fila = $resultado->fetch_assoc();
+        $idEstadoDisponible = $fila['idEstado_Mercancia'];
+
+        // Actualizar
+        $sqlUpdate = "
+        UPDATE Mercancia
+        SET Estado_Mercancia_idEstado_Mercancia = $idEstadoDisponible
+        WHERE idMercancia = $idMercancia
+    ";
+
+        return $this->conexion->getConexion()->query($sqlUpdate);
+    }
+
+    public function obtenerMercanciasActivas()
+    {
+        $sql = "
+        SELECT m.*, em.Valor AS Estado
+        FROM Mercancia m
+        INNER JOIN Estado_Mercancia em 
+            ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
+        WHERE em.Valor != 'Deshabilitado'
+        ORDER BY m.Nombre ASC
+    ";
+
+        $resultado = $this->conexion->getConexion()->query($sql);
+
+        $lista = [];
+        while ($fila = $resultado->fetch_assoc()) {
+            $lista[] = $fila;
+        }
+        return $lista;
+    }
+
+    public function obtenerMercanciasDeshabilitadas()
+    {
+        $sql = "
+        SELECT m.*, em.Valor AS Estado
+        FROM Mercancia m
+        INNER JOIN Estado_Mercancia em 
+            ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
+        WHERE em.Valor = 'Deshabilitado'
+        ORDER BY m.Nombre ASC
+    ";
+
+        $resultado = $this->conexion->getConexion()->query($sql);
+
+        $lista = [];
+        while ($fila = $resultado->fetch_assoc()) {
+            $lista[] = $fila;
+        }
+        return $lista;
+    }
+
+    public function obtenerDetallesMercancia($id)
+    {
+        $id = $this->conexion->getConexion()->real_escape_string($id);
+
+        $sql = "SELECT * FROM mercancia WHERE idMercancia = $id LIMIT 1";
+        $this->conexion->ejecutar($sql);
+
+        return $this->conexion->registro();
+    }
+
+    public function deshabilitarLote($ids)
+    {
+        $ids_limpios = array_map(function ($id) {
+            return intval($id);
+        }, $ids);
+
+        $lista = implode(",", $ids_limpios);
+
+        $sql = "UPDATE mercancia SET estado = 0 WHERE idMercancia IN ($lista)";
+        $this->conexion->ejecutar($sql);
+
+        return true;
+    }
+
+
+
+
+
 
     public function cerrarConexion()
     {

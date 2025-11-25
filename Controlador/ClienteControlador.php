@@ -1,5 +1,6 @@
 <?php
-require_once "Modelo/ClienteDAO.php";
+require_once __DIR__ . "/../Modelo/ClienteDAO.php";
+
 
 class ClienteControlador {
     private $clienteDAO;

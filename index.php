@@ -85,13 +85,13 @@ $paginas_con_autenticacion = array(
                 ⚙️ Deshabilitar Cliente
             </a>
              <a href="?pid=Vista/historialCompra.php" class="list-group-item list-group-item-action">
-                 Historial de Compra de Clientes 
+                📄 Historial de Compra de Clientes 
             </a>
             <a href="?pid=Vista/registrarVenta.php" class="list-group-item list-group-item-action">
-                registrarVenta
+                🛒 Registrar Venta
             </a>
-            <a href="?pid=Vista/comprobanteVenta.php" class="list-group-item list-group-item-action">
-                Comprobante Venta
+            <a href="?pid=Vista/reporteVentas.php" class="list-group-item list-group-item-action">
+                📊 Reportes Venta
             </a>
         </div>
 

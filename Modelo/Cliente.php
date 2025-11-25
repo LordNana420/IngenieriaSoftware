@@ -6,7 +6,7 @@ class Cliente {
     private $telefono;
     private $estado;
 
-    public function __construct($id = "", $nombre = "", $apellido = "", $telefono = "", $estado) {
+    public function __construct($id = "", $nombre = "", $apellido = "", $telefono = "", $estado = "") {
         $this->id = $id;
         $this->nombre = $nombre;
         $this->apellido = $apellido;
@@ -46,5 +46,9 @@ class Cliente {
     public function setTelefono($telefono) {
         $this->telefono = $telefono;
     }
+
+    public function setEstado($estado) {
+    $this->estado = $estado;
+}
 }
 ?>
