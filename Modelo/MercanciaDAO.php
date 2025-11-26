@@ -202,7 +202,7 @@ class MercanciaDAO
     private function obtenerEstadoDeshabilitadoId()
     {
         $sql = "SELECT idEstado_Mercancia 
-            FROM Estado_Mercancia 
+            FROM estado_mercancia 
             WHERE Valor = 'Deshabilitado' 
             LIMIT 1";
 
@@ -214,7 +214,7 @@ class MercanciaDAO
         }
 
         // Si no existe, lo crea
-        $sqlInsert = "INSERT INTO Estado_Mercancia (Valor) VALUES ('Deshabilitado')";
+        $sqlInsert = "INSERT INTO estado_mercancia (Valor) VALUES ('Deshabilitado')";
         if ($this->conexion->getConexion()->query($sqlInsert)) {
             return $this->conexion->getConexion()->insert_id;
         }
@@ -222,22 +222,6 @@ class MercanciaDAO
         return null;
     }
 
-    public function mercanciaEstaActiva($idMercancia)
-    {
-        $sql = "
-        SELECT m.idMercancia
-        FROM `mercancia` m
-        INNER JOIN Estado_Mercancia em 
-            ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
-        WHERE m.idMercancia = $idMercancia
-          AND em.Valor != 'Deshabilitado'
-        LIMIT 1
-    ";
-
-        $resultado = $this->conexion->getConexion()->query($sql);
-
-        return ($resultado && $resultado->num_rows > 0);
-    }
 
     public function deshabilitarMercancia($id)
     {
@@ -312,24 +296,46 @@ class MercanciaDAO
 
     public function obtenerMercanciasActivas()
     {
+        // La consulta SQL es correcta para filtrar por estado 'Activo'
         $sql = "
         SELECT m.*, em.Valor AS Estado
         FROM `mercancia` m
         INNER JOIN `estado_mercancia` em 
             ON m.Estado_Mercancia_idEstado_Mercancia = em.idEstado_Mercancia
-        WHERE em.Valor != 'Deshabilitado'
+        WHERE em.Valor = 'Activo'
         ORDER BY m.Nombre ASC
     ";
 
         $resultado = $this->conexion->getConexion()->query($sql);
 
-        $lista = [];
-        while ($fila = $resultado->fetch_assoc()) {
-            $lista[] = $fila;
+        $lista = []; // Inicializamos el array donde se guardarán los resultados mapeados
+
+        // Verificamos que la consulta haya tenido éxito y haya filas
+        if ($resultado && $resultado->num_rows > 0) {
+            while ($fila = $resultado->fetch_assoc()) {
+                // Mapear columnas de la BD al formato esperado por la vista
+                $lista[] = [
+                    'id' => $fila['idMercancia'],
+                    'nombre' => $fila['Nombre'],
+                    // Añadimos el nuevo campo 'estado' con el valor de la tabla 'estado_mercancia'
+                    'estado' => $fila['Estado'],
+                    // No hay columna Descripcion en la tabla; dejar vacío
+                    'descripcion' => '',
+                    'precio' => $fila['Precio_Unitario'] ?? 0,
+                    'cantidad' => $fila['Cantidad_Mercancia'] ?? 0,
+                    'stock_minimo' => $fila['Stock_Minimo'] ?? 0,
+                    'stock_maximo' => $fila['Stock_Maximo'] ?? 0,
+                    'fecha_ingreso' => $fila['Fecha_Ingreso'] ?? null,
+                    'fecha_vencimiento' => $fila['Fecha_vencimiento'] ?? null,
+                    'estado_id' => $fila['Estado_Mercancia_idEstado_Mercancia'] ?? null,
+                    'tipo_id' => $fila['Tipo_idEstado_Tipo'] ?? null,
+                    'inventario_id' => $fila['Inventario_idInventario'] ?? null
+                ];
+            }
         }
+
         return $lista;
     }
-
 
 
 

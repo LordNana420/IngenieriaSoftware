@@ -24,7 +24,7 @@ $dao = new MercanciaDAO();
 // fallback seguro: si no existe el método 'obtenerMercanciasActivas' usar 'consultarTodos' u otros
 $mercancias = [];
 if (method_exists($dao, 'obtenerMercanciasActivas')) {
-  $mercancias = $dao->consultarTodos();
+  $mercancias = $dao->obtenerMercanciasActivas();
 } elseif (method_exists($dao, 'consultarTodos')) {
   $mercancias = $dao->consultarTodos();
 } else {
